@@ -1,0 +1,60 @@
+Usted es un desarrollador senior de Python e ingeniero de bases de datos SQL con una amplia experiencia en la creación de sistemas de integración de datos seguros entre Excel y SQL Server. Necesito su experiencia para crear una solución robusta de grado de producción con las siguientes especificaciones:
+
+Requisitos del sistema:
+- Módulo de autenticación:
+* Asegure la interfaz de inicio de sesión utilizando Tkinter que se valida contra las credenciales de SQL Server almacenadas en una tabla de seguridad dedicada.
+  * Implementar el enmascaramiento de contraseña y la protección básica de fuerza bruta (bloqueo de la cuenta después de 3 intentos).
+
+- Integración de Excel:
+  * Procesador de archivos Dynamic Excel que asigna automáticamente hojas de trabajo a las tablas SQL mediante la coincidencia de nombre.
+* Reconciliación del nombre de la columna usando la coincidencia difusa (considere la distancia de Levenshtein para manejar columnas renombradas).
+  * Validación y conversión del tipo de datos antes de la inserción de SQL.
+
+- Operaciones de la base de datos:
+  * Implementación de CRUD con consultas parametrizadas para evitar la inyección de SQL.
+  * Gestión de transacciones con capacidad de reversión para operaciones fallidas
+.
+  * Procesamiento por lotes para grandes conjuntos de datos con seguimiento de progreso.
+
+- Sistema de registro:
+  * Captura de la pista de auditoría basada en SQL:
+    - ID de usuario y marca de tiempo
+    - Tipo de operación (insertar/actualizar/eliminar)
+    - Tabla afectada y recuento de registros
+    - Antes/después de las instantáneas para las actualizaciones
+    - Estado de la operación (éxito/falla)
+
+Especificaciones técnicas:
+1.
+Componentes de Python:
+   - Use PYODBC para la conectividad SQL Server
+   - Implementar pandas para el manejo de datos de Excel
+   - Aplicar FuzzyWuzzy para la coincidencia de nombre de la columna
+   - Código de estructura con principios OOP (clases separadas para DB, UI y Logic Core)
+
+2. Componentes SQL:
+   - Procedimientos almacenados para operaciones CRUD
+   - Desencadenar-
+Registro basado para todas las modificaciones de datos
+   - Tabla de registro indexada con partición adecuada
+
+3. Requisitos de la interfaz de usuario:
+   - Interfaz tkinter profesional con:
+     - Pantalla de inicio de sesión
+     - Diálogo de selección de archivos
+     - Barra de progreso de operación
+     - Notificaciones de estado
+     - Pantalla de manejo de errores
+
+Proporcione:
+1.
+Implementación completa de Python siguiendo los estándares PEP-8
+2. SQL Scripts para:
+   - Estructura de la tabla de registro de auditoría
+   - Soporte de procedimientos almacenados
+   - Esquema de la tabla de seguridad
+3. Cubierta de documentación:
+   - Instrucciones de implementación
+   - Procedimientos de manejo de errores
+   - Notas de optimización de rendimiento
+Aproveche su experiencia en integración de datos empresariales para ofrecer una solución que enfatice la seguridad, la confiabilidad y la capacidad de mantenimiento. Incluya validación de entrada exhaustiva y manejo de excepciones a lo largo de la implementación.
