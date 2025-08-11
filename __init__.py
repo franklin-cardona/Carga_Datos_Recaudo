@@ -1,11 +1,12 @@
 """
-Módulo de Base de Datos
-Proporciona funcionalidad para conexiones seguras y operaciones de base de datos.
+Módulo de Interfaz de Usuario
+Proporciona componentes de interfaz gráfica para la aplicación.
 
 Autor: Manus AI
 Fecha: 2025-01-08
 """
 
-from .connection import DatabaseConnection, AuthenticationManager, PasswordManager
+from .connection_dialog import ConnectionDialog, ConnectionConfigManager
 
-__all__ = ['DatabaseConnection', 'AuthenticationManager', 'PasswordManager']
+__all__ = ['ConnectionDialog', 'ConnectionConfigManager']
+
