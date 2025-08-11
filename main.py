@@ -40,7 +40,7 @@ class ExcelSQLIntegrationApp:
         self._validate_configuration()
 
         # Inicializar componentes
-        self._initialize_components()
+        # self._initialize_components()
 
     def _setup_logging(self):
         """Configura el sistema de logging."""
