@@ -9,4 +9,3 @@ Fecha: 2025-01-08
 from .connection_dialog import ConnectionDialog, ConnectionConfigManager
 
 __all__ = ['ConnectionDialog', 'ConnectionConfigManager']
-
