@@ -48,12 +48,12 @@ class ConnectionDialog:
 
         # Variables de interfaz
         self.server_var = tk.StringVar()
-        self.database_var = tk.StringVar(value="RECAUDO_DRFS")
+        self.database_var = tk.StringVar(value="HISTORICO")
         self.auth_type_var = tk.StringVar(value="windows")
         self.username_var = tk.StringVar()
         self.password_var = tk.StringVar()
         self.save_config_var = tk.BooleanVar(value=True)
-        self.environment_var = tk.StringVar(value="test")
+        self.environment_var = tk.StringVar(value="production")
 
         # Estado de la interfaz
         self.testing_connection = False
@@ -246,8 +246,9 @@ class ConnectionDialog:
                 with open(config_file, 'r', encoding='utf-8') as f:
                     config = json.load(f)
 
-                self.server_var.set(config.get('server', ''))
-                self.database_var.set(config.get('database', 'RECAUDO_DRFS'))
+                self.server_var.set(config.get(
+                    'server', 'P18PPAD20\\SQLEXPRESS'))
+                self.database_var.set(config.get('database', 'HISTORICO'))
                 self.auth_type_var.set(config.get('auth_type', 'windows'))
                 self.username_var.set(config.get('username', ''))
                 # No cargar contraseña por seguridad
@@ -375,6 +376,7 @@ class ConnectionDialog:
         Args:
             connect_and_close: Si cerrar el diálogo después de conexión exitosa
         """
+
         if self.testing_connection:
             return
 
@@ -393,11 +395,13 @@ class ConnectionDialog:
 
         # Ejecutar prueba en hilo separado
         config = self._get_connection_config()
+
         thread = threading.Thread(
             target=self._test_connection_thread,
             args=(config, connect_and_close),
             daemon=True
         )
+
         thread.start()
 
     def _test_connection_thread(self, config: Dict[str, Any], connect_and_close: bool):
@@ -410,10 +414,15 @@ class ConnectionDialog:
         """
         try:
             # Importar aquí para evitar dependencias circulares
-            from ..database import DatabaseConnection
+            from connection import DatabaseConnection
 
             # Crear conexión de prueba
-            db_connection = DatabaseConnection(**config)
+            db_connection = DatabaseConnection(
+                server=config.get("server"), database=config.get('database'),
+                trusted_connection=config.get("trusted_connection", False),
+                driver=config.get('driver', 'ODBC Driver 17 for SQL Server'),
+                username=config.get('username', None),
+                password=config.get('password', None))
 
             # Probar conexión
             success, error_msg = db_connection.test_connection()
