@@ -2,7 +2,7 @@
 Configuración de la Aplicación
 Contiene todas las configuraciones y constantes de la aplicación.
 
-Autor: Manus AI
+Autor: FRANKLIN ANDRES CARDONA YARA
 Fecha: 2025-01-08
 """
 
@@ -15,7 +15,7 @@ class Config:
     """
     Clase de configuración principal de la aplicación.
     """
-    
+
     # Configuración de base de datos
     DATABASE_CONFIG = {
         'server': os.getenv('SQL_SERVER', 'localhost'),
@@ -27,16 +27,17 @@ class Config:
         'connection_timeout': int(os.getenv('SQL_CONNECTION_TIMEOUT', '30')),
         'command_timeout': int(os.getenv('SQL_COMMAND_TIMEOUT', '300'))
     }
-    
+
     # Configuración de logging
     LOGGING_CONFIG = {
         'level': getattr(logging, os.getenv('LOG_LEVEL', 'INFO').upper()),
         'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         'file_path': os.getenv('LOG_FILE_PATH', 'logs/application.log'),
-        'max_file_size': int(os.getenv('LOG_MAX_FILE_SIZE', '10485760')),  # 10MB
+        # 10MB
+        'max_file_size': int(os.getenv('LOG_MAX_FILE_SIZE', '10485760')),
         'backup_count': int(os.getenv('LOG_BACKUP_COUNT', '5'))
     }
-    
+
     # Configuración de seguridad
     SECURITY_CONFIG = {
         'max_login_attempts': int(os.getenv('MAX_LOGIN_ATTEMPTS', '3')),
@@ -45,7 +46,7 @@ class Config:
         'password_min_length': int(os.getenv('PASSWORD_MIN_LENGTH', '8')),
         'require_password_complexity': os.getenv('REQUIRE_PASSWORD_COMPLEXITY', 'True').lower() == 'true'
     }
-    
+
     # Configuración de Excel
     EXCEL_CONFIG = {
         'max_file_size_mb': int(os.getenv('EXCEL_MAX_FILE_SIZE_MB', '50')),
@@ -54,7 +55,7 @@ class Config:
         'fuzzy_match_threshold': float(os.getenv('FUZZY_MATCH_THRESHOLD', '0.8')),
         'auto_detect_headers': os.getenv('EXCEL_AUTO_DETECT_HEADERS', 'True').lower() == 'true'
     }
-    
+
     # Configuración de UI
     UI_CONFIG = {
         'theme': os.getenv('UI_THEME', 'clam'),
@@ -63,7 +64,7 @@ class Config:
         'font_family': os.getenv('UI_FONT_FAMILY', 'Arial'),
         'font_size': int(os.getenv('UI_FONT_SIZE', '10'))
     }
-    
+
     # Configuración de auditoría
     AUDIT_CONFIG = {
         'enable_detailed_logging': os.getenv('AUDIT_DETAILED_LOGGING', 'True').lower() == 'true',
@@ -71,7 +72,7 @@ class Config:
         'retention_days': int(os.getenv('AUDIT_RETENTION_DAYS', '365')),
         'compress_old_logs': os.getenv('AUDIT_COMPRESS_OLD_LOGS', 'True').lower() == 'true'
     }
-    
+
     # Configuración de rendimiento
     PERFORMANCE_CONFIG = {
         'enable_performance_monitoring': os.getenv('PERF_MONITORING', 'True').lower() == 'true',
@@ -79,17 +80,17 @@ class Config:
         'max_memory_usage_mb': int(os.getenv('PERF_MAX_MEMORY_MB', '512')),
         'enable_parallel_processing': os.getenv('PERF_PARALLEL_PROCESSING', 'True').lower() == 'true'
     }
-    
+
     @classmethod
     def get_database_connection_string(cls) -> str:
         """
         Construye la cadena de conexión de base de datos.
-        
+
         Returns:
             Cadena de conexión ODBC
         """
         config = cls.DATABASE_CONFIG
-        
+
         if config['trusted_connection']:
             return (
                 f"DRIVER={{{config['driver']}}};"
@@ -113,64 +114,67 @@ class Config:
                 f"Encrypt=yes;"
                 f"TrustServerCertificate=yes;"
             )
-    
+
     @classmethod
     def validate_config(cls) -> Dict[str, Any]:
         """
         Valida la configuración actual.
-        
+
         Returns:
             Diccionario con resultado de validación
         """
         errors = []
         warnings = []
-        
+
         # Validar configuración de base de datos
         db_config = cls.DATABASE_CONFIG
         if not db_config['server']:
             errors.append("Servidor de base de datos no configurado")
-        
+
         if not db_config['database']:
             errors.append("Nombre de base de datos no configurado")
-        
+
         if not db_config['trusted_connection']:
             if not db_config['username']:
                 errors.append("Usuario de base de datos no configurado")
             if not db_config['password']:
                 warnings.append("Contraseña de base de datos no configurada")
-        
+
         # Validar configuración de Excel
         excel_config = cls.EXCEL_CONFIG
         if excel_config['max_file_size_mb'] > 100:
-            warnings.append("Tamaño máximo de archivo Excel muy grande (>100MB)")
-        
+            warnings.append(
+                "Tamaño máximo de archivo Excel muy grande (>100MB)")
+
         if excel_config['fuzzy_match_threshold'] < 0.5 or excel_config['fuzzy_match_threshold'] > 1.0:
-            errors.append("Umbral de coincidencia difusa debe estar entre 0.5 y 1.0")
-        
+            errors.append(
+                "Umbral de coincidencia difusa debe estar entre 0.5 y 1.0")
+
         # Validar configuración de seguridad
         security_config = cls.SECURITY_CONFIG
         if security_config['max_login_attempts'] < 1:
             errors.append("Máximo de intentos de login debe ser mayor a 0")
-        
+
         if security_config['password_min_length'] < 6:
-            warnings.append("Longitud mínima de contraseña muy baja (<6 caracteres)")
-        
+            warnings.append(
+                "Longitud mínima de contraseña muy baja (<6 caracteres)")
+
         return {
             'valid': len(errors) == 0,
             'errors': errors,
             'warnings': warnings
         }
-    
+
     @classmethod
     def setup_logging(cls):
         """Configura el sistema de logging."""
         config = cls.LOGGING_CONFIG
-        
+
         # Crear directorio de logs si no existe
         log_dir = os.path.dirname(config['file_path'])
         if log_dir and not os.path.exists(log_dir):
             os.makedirs(log_dir)
-        
+
         # Configurar logging
         logging.basicConfig(
             level=config['level'],
@@ -180,17 +184,17 @@ class Config:
                 logging.StreamHandler()
             ]
         )
-        
+
         # Configurar rotación de archivos de log
         if config['max_file_size'] > 0:
             from logging.handlers import RotatingFileHandler
-            
+
             # Remover handler de archivo existente
             root_logger = logging.getLogger()
             for handler in root_logger.handlers[:]:
                 if isinstance(handler, logging.FileHandler):
                     root_logger.removeHandler(handler)
-            
+
             # Agregar handler con rotación
             rotating_handler = RotatingFileHandler(
                 config['file_path'],
@@ -204,13 +208,13 @@ class Config:
 
 class DevelopmentConfig(Config):
     """Configuración para entorno de desarrollo."""
-    
+
     DATABASE_CONFIG = Config.DATABASE_CONFIG.copy()
     DATABASE_CONFIG.update({
         'server': 'localhost',
         'database': 'ExcelSQLIntegration_Dev'
     })
-    
+
     LOGGING_CONFIG = Config.LOGGING_CONFIG.copy()
     LOGGING_CONFIG.update({
         'level': logging.DEBUG,
@@ -220,13 +224,13 @@ class DevelopmentConfig(Config):
 
 class ProductionConfig(Config):
     """Configuración para entorno de producción."""
-    
+
     LOGGING_CONFIG = Config.LOGGING_CONFIG.copy()
     LOGGING_CONFIG.update({
         'level': logging.WARNING,
         'file_path': 'logs/production.log'
     })
-    
+
     SECURITY_CONFIG = Config.SECURITY_CONFIG.copy()
     SECURITY_CONFIG.update({
         'max_login_attempts': 5,
@@ -237,12 +241,12 @@ class ProductionConfig(Config):
 
 class TestConfig(Config):
     """Configuración para entorno de pruebas."""
-    
+
     DATABASE_CONFIG = Config.DATABASE_CONFIG.copy()
     DATABASE_CONFIG.update({
         'database': 'ExcelSQLIntegration_Test'
     })
-    
+
     LOGGING_CONFIG = Config.LOGGING_CONFIG.copy()
     LOGGING_CONFIG.update({
         'level': logging.DEBUG,
@@ -263,7 +267,7 @@ else:
 # Constantes de la aplicación
 APP_NAME = "Excel-SQL Integration"
 APP_VERSION = "1.0.0"
-APP_AUTHOR = "Manus AI"
+APP_AUTHOR = "FRANKLIN ANDRES CARDONA YARA"
 APP_DESCRIPTION = "Sistema de integración de datos entre Excel y SQL Server"
 
 # Mensajes de la aplicación
@@ -279,4 +283,3 @@ MESSAGES = {
     'permission_denied': 'Permisos insuficientes',
     'session_expired': 'Sesión expirada'
 }
-

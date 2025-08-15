@@ -2,7 +2,7 @@
 Diálogo de Configuración de Conexión
 Proporciona una interfaz para configurar la conexión a SQL Server.
 
-Autor: Manus AI
+Autor: FRANKLIN ANDRES CARDONA YARA
 Fecha: 2025-01-08
 """
 

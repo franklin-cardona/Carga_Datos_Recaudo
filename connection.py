@@ -2,7 +2,7 @@
 Módulo de Conexión a Base de Datos
 Proporciona funcionalidad para conectarse a SQL Server de forma segura.
 
-Autor: Manus AI
+Autor: FRANKLIN ANDRES CARDONA YARA
 Fecha: 2025-01-08
 """
 
@@ -101,7 +101,7 @@ class DatabaseConnection:
             Tupla (éxito, mensaje_error)
         """
         try:
-            self.logger.info(f"conecxion: {self._connection_string}")
+
             with pyodbc.connect(self._connection_string, timeout=10) as conn:
                 cursor = conn.cursor()
                 cursor.execute("SELECT 1")
