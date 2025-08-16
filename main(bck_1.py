@@ -2,7 +2,7 @@
 Aplicación Principal - Excel-SQL Integration
 Punto de entrada principal para la aplicación de integración de datos con configuración dinámica de conexión.
 
-Autor: Manus AI
+Autor: FRANKLIN ANDRES CARDONA YARA
 Fecha: 2025-01-08
 """
 
@@ -11,6 +11,7 @@ import os
 import logging
 import tkinter as tk
 from tkinter import messagebox
+from tkinter import filedialog
 from typing import Dict, Any, Optional
 import getpass
 
@@ -22,6 +23,9 @@ try:
     from config import active_config, APP_NAME, APP_VERSION, MESSAGES
     from connection import DatabaseConnection
     from connection_dialog import ConnectionDialog, ConnectionConfigManager
+    from excel_processor import ExcelProcessor
+    from table_mapper import TableMapper
+
 except ImportError as e:
     print(f"Error de importación: {e}")
     print("Asegúrate de ejecutar la aplicación desde el directorio correcto")
@@ -52,7 +56,7 @@ class ExcelSQLIntegrationApp:
             # Configuración básica de logging si no existe configuración activa
             logging.basicConfig(
                 level=logging.INFO,
-                format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                # format="""% (asctime)s - %(name)s - %(levelname)s - %(message)s""",
                 handlers=[
                     logging.FileHandler('excel_sql_integration.log'),
                     logging.StreamHandler()
@@ -153,32 +157,29 @@ class ExcelSQLIntegrationApp:
                 windows_user = getpass.getuser()
                 computer_name = os.environ.get('COMPUTERNAME', 'UNKNOWN')
 
-                return {
-                    'username': f"{computer_name}\\{windows_user}",
-                    'auth_type': 'Windows',
-                    'display_name': windows_user,
-                    'is_windows_auth': True
-                }
+                return {'username': f"{computer_name}\\\\{windows_user}",
+                        'auth_type': 'Windows',
+                        'display_name': windows_user,
+                        'is_windows_auth': True
+                        }
             else:
                 # Autenticación de SQL Server - usar usuario de la configuración
                 sql_user = self.connection_config.get('username', 'UNKNOWN')
 
-                return {
-                    'username': sql_user,
-                    'auth_type': 'SQL Server',
-                    'display_name': sql_user,
-                    'is_windows_auth': False
-                }
+                return {'username': sql_user,
+                        'auth_type': 'SQL Server',
+                        'display_name': sql_user,
+                        'is_windows_auth': False
+                        }
 
         except Exception as e:
             self.logger.warning(
                 f"Error obteniendo información de usuario: {str(e)}")
-            return {
-                'username': 'UNKNOWN',
-                'auth_type': 'Unknown',
-                'display_name': 'Usuario Desconocido',
-                'is_windows_auth': False
-            }
+            return {'username': 'UNKNOWN',
+                    'auth_type': 'Unknown',
+                    'display_name': 'Usuario Desconocido',
+                    'is_windows_auth': False
+                    }
 
     def _check_database_schema(self) -> bool:
         """
@@ -189,12 +190,11 @@ class ExcelSQLIntegrationApp:
         """
         try:
             # Lista de tablas opcionales para verificar
-            optional_tables = [
-                'Security.Users',
-                'Security.Roles',
-                'Audit.OperationLog',
-                'Data.Customers'
-            ]
+            optional_tables = ['Security.Users',
+                               'Security.Roles',
+                               'Audit.OperationLog',
+                               'Data.Customers'
+                               ]
 
             missing_tables = []
 
@@ -280,9 +280,9 @@ class ExcelSQLIntegrationApp:
             self.logger.info(
                 f"Aplicación iniciada para usuario: {user_info['username']}")
 
-            # TODO: Aquí se iniciará la interfaz principal de la aplicación
+            # Aquí se iniciará la interfaz principal de la aplicación
             # Por ahora, mostrar mensaje informativo
-            self._show_main_interface_placeholder()
+            self._show_main_interfaz_Principal()
 
         except Exception as e:
             self.logger.error(
@@ -290,39 +290,16 @@ class ExcelSQLIntegrationApp:
             messagebox.showerror(
                 "Error", f"Error en aplicación principal: {str(e)}")
 
-    def _show_main_interface_placeholder(self):
-        """Inicia la interfaz principal de la aplicación."""
-        try:
-            from main_interface import MainInterface
-            self.logger.info(
-                f"Iniciando interfaz principal {self.db_connection}")
-            # Crear interfaz principal
-            main_interface = MainInterface(
-                db_connection=self.db_connection,
-                user_info=self.current_user,
-                on_file_process=self._process_excel_file
-            )
-
-            # Mostrar interfaz
-            main_interface.show()
-
-        except ImportError as e:
-            self.logger.error(f"Error importando interfaz principal: {str(e)}")
-            # Fallback a interfaz placeholder
-            self._show_placeholder_interface()
-        except Exception as e:
-            self.logger.error(f"Error mostrando interfaz principal: {str(e)}")
-            messagebox.showerror(
-                "Error", f"Error iniciando interfaz principal:\n{str(e)}")
-
-    def _show_placeholder_interface(self):
-        """Muestra una interfaz placeholder temporal."""
+    def _show_main_interfaz_Principal(self):
+        """
+        Muestra una interfaz principal.
+        """
         try:
             # Crear ventana principal temporal
             root = tk.Tk()
             root.title(
                 f"{APP_NAME} - Usuario: {self.current_user['display_name']}")
-            root.geometry("600x400")
+            root.geometry("800x800")
             root.resizable(True, True)
 
             # Frame principal
@@ -339,7 +316,7 @@ class ExcelSQLIntegrationApp:
 
             # Información de conexión
             info_text = (
-                f"Conexión Activa:\n"
+                f"Conexión Activa:\\n"
                 f"Servidor: {self.connection_config['server']}\n"
                 f"Base de Datos: {self.connection_config['database']}\n"
                 f"Usuario: {self.current_user['display_name']}\n"
@@ -360,11 +337,15 @@ class ExcelSQLIntegrationApp:
 
             # Mensaje de desarrollo
             dev_message = (
-                "🚧 INTERFAZ PRINCIPAL EN DESARROLLO 🚧\n\n"
-                "La conexión a la base de datos está funcionando correctamente.\n"
-                "La interfaz principal se está cargando...\n\n"
-                "Si ve este mensaje, puede que falten algunos módulos.\n"
-                "Verifique que todos los archivos estén en su lugar."
+                "🚧 Interfaz de selección de archivos 🚧\n\n"
+                # "La conexión a la base de datos está funcionando correctamente.\n"
+                # "Las siguientes funcionalidades se implementarán en las próximas fases:\n\n"
+                # "• Interfaz de selección de archivos Excel\n"
+                # "• Mapeo automático de columnas\n"
+                # "• Validación de datos\n"
+                # "• Procesamiento por lotes\n"
+                # "• Sistema de auditoría\n"
+                # "• Reportes de resultados"
             )
 
             dev_label = tk.Label(
@@ -377,6 +358,18 @@ class ExcelSQLIntegrationApp:
                 pady=10
             )
             dev_label.pack(fill=tk.BOTH, expand=True, pady=(0, 20))
+
+            # crear objeto para abrir ventana de seleccion de archivos de excel
+            # y procesarlos
+            # from excel_file_selector import ExcelFileSelector
+            self.file_selector = ExcelProcessor()
+            archivo = filedialog.askopenfilename(
+                filetypes=[("Excel files", "*.xlsx *.xls")])
+            if self.file_selector.validate_file(archivo)[0]:
+                base = TableMapper(self.db_connection)
+                self.logger.info(
+                    # f"prueba de lectura: {self.file_selector.process_excel_file(archivo,)}")
+                    f"prueba de lectura: {base}")
 
             # Botón de cerrar
             close_button = tk.Button(
@@ -399,33 +392,104 @@ class ExcelSQLIntegrationApp:
 
         except Exception as e:
             self.logger.error(
-                f"Error mostrando interfaz placeholder: {str(e)}")
+                f"Error mostrando interfaz Principal: {str(e)}")
 
-    def _process_excel_file(self, file_path: str, mappings: Dict[str, Any]) -> bool:
-        """
-        Procesa un archivo Excel con los mapeos especificados.
+    # def _show_main_interface_placeholder(self):
+    #     """
+    #     Muestra una interfaz placeholder hasta que se implemente la interfaz principal.
+    #     """
+    #     try:
+    #         # Crear ventana principal temporal
+    #         root = tk.Tk()
+    #         root.title(
+    #             f"{APP_NAME} - Usuario: {self.current_user['display_name']}")
+    #         root.geometry("800x800")
+    #         root.resizable(True, True)
 
-        Args:
-            file_path: Ruta del archivo Excel
-            mappings: Mapeos de columnas
+    #         # Frame principal
+    #         main_frame = tk.Frame(root, padx=20, pady=20)
+    #         main_frame.pack(fill=tk.BOTH, expand=True)
 
-        Returns:
-            True si el procesamiento fue exitoso
-        """
-        try:
-            self.logger.info(f"Procesando archivo Excel: {file_path}")
+    #         # Título
+    #         title_label = tk.Label(
+    #             main_frame,
+    #             text=f"{APP_NAME} v{APP_VERSION}",
+    #             font=('Arial', 16, 'bold')
+    #         )
+    #         title_label.pack(pady=(0, 20))
 
-            # Aquí se implementará la lógica de procesamiento completa
-            # Por ahora, solo registrar la operación
+    #         # Información de conexión
+    #         info_text = (
+    #             f"Conexión Activa:\\n"
+    #             f"Servidor: {self.connection_config['server']}\n"
+    #             f"Base de Datos: {self.connection_config['database']}\n"
+    #             f"Usuario: {self.current_user['display_name']}\n"
+    #             f"Tipo de Autenticación: {self.current_user['auth_type']}\n\n"
+    #             f"Estado: ✓ Conectado y listo para procesar archivos Excel"
+    #         )
 
-            return True
+    #         info_label = tk.Label(
+    #             main_frame,
+    #             text=info_text,
+    #             font=('Arial', 10),
+    #             justify=tk.LEFT,
+    #             bg='lightgreen',
+    #             padx=10,
+    #             pady=10
+    #         )
+    #         info_label.pack(fill=tk.X, pady=(0, 20))
 
-        except Exception as e:
-            self.logger.error(f"Error procesando archivo Excel: {str(e)}")
-            return False
+    #         # Mensaje de desarrollo
+    #         dev_message = (
+    #             "🚧 APLICACIÓN EN DESARROLLO 🚧\n\n"
+    #             "La conexión a la base de datos está funcionando correctamente.\n"
+    #             "Las siguientes funcionalidades se implementarán en las próximas fases:\n\n"
+    #             "• Interfaz de selección de archivos Excel\n"
+    #             "• Mapeo automático de columnas\n"
+    #             "• Validación de datos\n"
+    #             "• Procesamiento por lotes\n"
+    #             "• Sistema de auditoría\n"
+    #             "• Reportes de resultados"
+    #         )
+
+    #         dev_label = tk.Label(
+    #             main_frame,
+    #             text=dev_message,
+    #             font=('Arial', 9),
+    #             justify=tk.LEFT,
+    #             bg='lightyellow',
+    #             padx=10,
+    #             pady=10
+    #         )
+    #         dev_label.pack(fill=tk.BOTH, expand=True, pady=(0, 20))
+
+    #         # Botón de cerrar
+    #         close_button = tk.Button(
+    #             main_frame,
+    #             text="Cerrar Aplicación",
+    #             command=root.destroy,
+    #             font=('Arial', 10),
+    #             bg='lightcoral'
+    #         )
+    #         close_button.pack()
+
+    #         # Centrar ventana
+    #         root.update_idletasks()
+    #         x = (root.winfo_screenwidth() // 2) - (root.winfo_width() // 2)
+    #         y = (root.winfo_screenheight() // 2) - (root.winfo_height() // 2)
+    #         root.geometry(f"+{x}+{y}")
+
+    #         # Mostrar ventana
+    #         root.mainloop()
+
+    #     except Exception as e:
+    #         self.logger.error(
+    #             f"Error mostrando interfaz placeholder: {str(e)}")
 
     def run(self):
-        """Ejecuta la aplicación."""
+        """
+        Ejecuta la aplicación.
+        """
         try:
             self.logger.info("Iniciando aplicación")
 
@@ -440,7 +504,7 @@ class ExcelSQLIntegrationApp:
                     "No se pudo inicializar la conexión a base de datos")
                 return
 
-            # Paso 3: Verificar esquema de base de datos (opcional)
+            # # Paso 3: Verificar esquema de base de datos (opcional)
             # if not self._check_database_schema():
             #     self.logger.info(
             #         "Verificación de esquema cancelada por el usuario")
