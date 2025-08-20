@@ -140,9 +140,9 @@ class ExcelProcessor:
 
             # Verificar tamaño del archivo
             file_size = os.path.getsize(file_path)
-            # max_size = 50 * 1024 * 1024  # 50MB
-            # if file_size > max_size:
-            #     return False, f"El archivo es demasiado grande ({file_size / 1024 / 1024:.1f}MB). Máximo permitido: 50MB"
+            max_size = 1000 * 1024 * 1024  # 1000MB
+            if file_size > max_size:
+                return False, f"El archivo es demasiado grande ({file_size / 1024 / 1024:.1f}MB). Máximo permitido: 1000MB"
 
             # Intentar abrir el archivo
             try:

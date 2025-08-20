@@ -1,0 +1,305 @@
+2025-08-19 16:51:39,999 - __main__ - INFO - Iniciando Excel-SQL Integration v1.0.0
+2025-08-19 16:51:39,999 - __main__ - INFO - Iniciando aplicación
+2025-08-19 16:51:39,999 - __main__ - INFO - Mostrando diálogo de configuración de conexión
+2025-08-19 16:51:40,062 - connection_dialog - INFO - Configuración cargada desde archivo
+2025-08-19 16:51:43,004 - connection - INFO - Conexión a base de datos exitosa
+2025-08-19 16:51:43,084 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-19 16:51:43,084 - __main__ - INFO - Conexión configurada para servidor: P18PPAD20\SQLEXPRESS
+2025-08-19 16:51:43,103 - connection - INFO - Conexión a base de datos exitosa
+2025-08-19 16:51:43,104 - __main__ - INFO - Conexión a base de datos inicializada exitosamente
+2025-08-19 16:51:43,104 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-19 16:51:44,438 - __main__ - INFO - Aplicación iniciada para usuario: P18PPAD20\franklin.cardona
+2025-08-19 16:51:44,451 - __main__ - ERROR - Error mostrando interfaz principal: f-string: unmatched '[' (main_interface.py, line 87)
+2025-08-19 16:51:47,638 - __main__ - INFO - Aplicación finalizada exitosamente
+2025-08-19 16:51:47,639 - __main__ - INFO - Cerrando conexión a base de datos
+2025-08-19 16:51:47,639 - __main__ - INFO - Recursos limpiados exitosamente
+2025-08-19 16:54:57,432 - __main__ - INFO - Iniciando Excel-SQL Integration v1.0.0
+2025-08-19 16:54:57,432 - __main__ - INFO - Iniciando aplicación
+2025-08-19 16:54:57,432 - __main__ - INFO - Mostrando diálogo de configuración de conexión
+2025-08-19 16:54:57,487 - connection_dialog - INFO - Configuración cargada desde archivo
+2025-08-19 16:55:01,770 - connection - INFO - Conexión a base de datos exitosa
+2025-08-19 16:55:01,781 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-19 16:55:01,781 - __main__ - INFO - Conexión configurada para servidor: P18PPAD20\SQLEXPRESS
+2025-08-19 16:55:01,795 - connection - INFO - Conexión a base de datos exitosa
+2025-08-19 16:55:01,795 - __main__ - INFO - Conexión a base de datos inicializada exitosamente
+2025-08-19 16:55:01,795 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-19 16:55:02,945 - __main__ - INFO - Aplicación iniciada para usuario: P18PPAD20\franklin.cardona
+2025-08-19 16:55:02,954 - __main__ - ERROR - Error mostrando interfaz principal: f-string: unmatched '[' (main_interface.py, line 87)
+2025-08-19 16:55:06,907 - __main__ - INFO - Aplicación finalizada exitosamente
+2025-08-19 16:55:06,907 - __main__ - INFO - Cerrando conexión a base de datos
+2025-08-19 16:55:06,907 - __main__ - INFO - Recursos limpiados exitosamente
+2025-08-19 16:57:20,703 - __main__ - INFO - Iniciando Excel-SQL Integration v1.0.0
+2025-08-19 16:57:20,704 - __main__ - INFO - Iniciando aplicación
+2025-08-19 16:57:20,704 - __main__ - INFO - Mostrando diálogo de configuración de conexión
+2025-08-19 16:57:20,755 - connection_dialog - INFO - Configuración cargada desde archivo
+2025-08-19 16:57:23,885 - connection - INFO - Conexión a base de datos exitosa
+2025-08-19 16:57:23,894 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-19 16:57:23,894 - __main__ - INFO - Conexión configurada para servidor: P18PPAD20\SQLEXPRESS
+2025-08-19 16:57:23,914 - connection - INFO - Conexión a base de datos exitosa
+2025-08-19 16:57:23,915 - __main__ - INFO - Conexión a base de datos inicializada exitosamente
+2025-08-19 16:57:23,916 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-19 16:57:25,267 - __main__ - INFO - Aplicación iniciada para usuario: P18PPAD20\franklin.cardona
+2025-08-19 16:57:25,282 - __main__ - ERROR - Error mostrando interfaz principal: f-string: unmatched '[' (main_interface.py, line 172)
+2025-08-19 16:57:28,543 - __main__ - INFO - Aplicación finalizada exitosamente
+2025-08-19 16:57:28,543 - __main__ - INFO - Cerrando conexión a base de datos
+2025-08-19 16:57:28,543 - __main__ - INFO - Recursos limpiados exitosamente
+2025-08-19 16:57:57,458 - __main__ - INFO - Iniciando Excel-SQL Integration v1.0.0
+2025-08-19 16:57:57,459 - __main__ - INFO - Iniciando aplicación
+2025-08-19 16:57:57,459 - __main__ - INFO - Mostrando diálogo de configuración de conexión
+2025-08-19 16:57:57,507 - connection_dialog - INFO - Configuración cargada desde archivo
+2025-08-19 16:58:01,017 - connection - INFO - Conexión a base de datos exitosa
+2025-08-19 16:58:01,031 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-19 16:58:01,032 - __main__ - INFO - Conexión configurada para servidor: P18PPAD20\SQLEXPRESS
+2025-08-19 16:58:01,055 - connection - INFO - Conexión a base de datos exitosa
+2025-08-19 16:58:01,055 - __main__ - INFO - Conexión a base de datos inicializada exitosamente
+2025-08-19 16:58:01,056 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-19 16:58:02,249 - __main__ - INFO - Aplicación iniciada para usuario: P18PPAD20\franklin.cardona
+2025-08-19 16:58:03,910 - __main__ - INFO - Iniciando interfaz principal <connection.DatabaseConnection object at 0x00000228B7B48E50>
+2025-08-19 16:58:03,999 - main_interface - INFO - Esquemas cargados: 2
+2025-08-19 16:58:53,782 - __main__ - INFO - Aplicación finalizada exitosamente
+2025-08-19 16:58:53,782 - __main__ - INFO - Cerrando conexión a base de datos
+2025-08-19 16:58:53,782 - __main__ - INFO - Recursos limpiados exitosamente
+2025-08-19 17:00:44,142 - __main__ - INFO - Iniciando Excel-SQL Integration v1.0.0
+2025-08-19 17:00:44,143 - __main__ - INFO - Iniciando aplicación
+2025-08-19 17:00:44,143 - __main__ - INFO - Mostrando diálogo de configuración de conexión
+2025-08-19 17:00:44,190 - connection_dialog - INFO - Configuración cargada desde archivo
+2025-08-19 17:00:48,100 - connection - INFO - Conexión a base de datos exitosa
+2025-08-19 17:00:48,118 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-19 17:00:48,118 - __main__ - INFO - Conexión configurada para servidor: P18PPAD20\SQLEXPRESS
+2025-08-19 17:00:48,135 - connection - INFO - Conexión a base de datos exitosa
+2025-08-19 17:00:48,135 - __main__ - INFO - Conexión a base de datos inicializada exitosamente
+2025-08-19 17:00:48,135 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-19 17:00:49,320 - __main__ - INFO - Aplicación iniciada para usuario: P18PPAD20\franklin.cardona
+2025-08-19 17:00:49,690 - __main__ - INFO - Iniciando interfaz principal <connection.DatabaseConnection object at 0x000001935BB58E50>
+2025-08-19 17:00:49,812 - main_interface - INFO - Esquemas cargados: 2
+2025-08-19 17:01:13,312 - __main__ - INFO - Aplicación finalizada exitosamente
+2025-08-19 17:01:13,312 - __main__ - INFO - Cerrando conexión a base de datos
+2025-08-19 17:01:13,312 - __main__ - INFO - Recursos limpiados exitosamente
+2025-08-19 17:03:28,129 - __main__ - INFO - Iniciando Excel-SQL Integration v1.0.0
+2025-08-19 17:03:28,130 - __main__ - INFO - Iniciando aplicación
+2025-08-19 17:03:28,130 - __main__ - INFO - Mostrando diálogo de configuración de conexión
+2025-08-19 17:03:28,189 - connection_dialog - INFO - Configuración cargada desde archivo
+2025-08-19 17:03:33,262 - connection - INFO - Conexión a base de datos exitosa
+2025-08-19 17:03:33,276 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-19 17:03:33,276 - __main__ - INFO - Conexión configurada para servidor: P18PPAD20\SQLEXPRESS
+2025-08-19 17:03:33,292 - connection - INFO - Conexión a base de datos exitosa
+2025-08-19 17:03:33,292 - __main__ - INFO - Conexión a base de datos inicializada exitosamente
+2025-08-19 17:03:33,292 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-19 17:03:34,825 - __main__ - INFO - Aplicación iniciada para usuario: P18PPAD20\franklin.cardona
+2025-08-19 17:03:35,187 - __main__ - INFO - Iniciando interfaz principal <connection.DatabaseConnection object at 0x000001F2C7FE8E50>
+2025-08-19 17:03:35,273 - main_interface - INFO - Esquemas cargados: 2
+2025-08-19 17:05:57,996 - __main__ - INFO - Aplicación finalizada exitosamente
+2025-08-19 17:05:57,996 - __main__ - INFO - Cerrando conexión a base de datos
+2025-08-19 17:05:57,997 - __main__ - INFO - Recursos limpiados exitosamente
+2025-08-19 17:06:01,506 - __main__ - INFO - Iniciando Excel-SQL Integration v1.0.0
+2025-08-19 17:06:01,506 - __main__ - INFO - Iniciando aplicación
+2025-08-19 17:06:01,506 - __main__ - INFO - Mostrando diálogo de configuración de conexión
+2025-08-19 17:06:01,560 - connection_dialog - INFO - Configuración cargada desde archivo
+2025-08-19 17:06:03,973 - connection - INFO - Conexión a base de datos exitosa
+2025-08-19 17:06:03,989 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-19 17:06:03,989 - __main__ - INFO - Conexión configurada para servidor: P18PPAD20\SQLEXPRESS
+2025-08-19 17:06:04,002 - connection - INFO - Conexión a base de datos exitosa
+2025-08-19 17:06:04,002 - __main__ - INFO - Conexión a base de datos inicializada exitosamente
+2025-08-19 17:06:04,007 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-19 17:06:05,232 - __main__ - INFO - Aplicación iniciada para usuario: P18PPAD20\franklin.cardona
+2025-08-19 17:06:05,613 - __main__ - INFO - Iniciando interfaz principal <connection.DatabaseConnection object at 0x000001C5D6C68E50>
+2025-08-19 17:06:05,706 - main_interface - INFO - Esquemas cargados: 2
+2025-08-19 17:06:19,265 - main_interface - INFO - Archivo Excel cargado: D:/Franklin.Cardona/Tableros PowerBI/Recaudo/BD RECAUDO-001-31102023.xlsx
+2025-08-19 17:06:30,414 - main_interface - INFO - Esquemas cargados: 2
+2025-08-19 17:06:44,537 - __main__ - INFO - Aplicación finalizada exitosamente
+2025-08-19 17:06:44,543 - __main__ - INFO - Cerrando conexión a base de datos
+2025-08-19 17:06:44,543 - __main__ - INFO - Recursos limpiados exitosamente
+2025-08-19 17:06:52,926 - __main__ - INFO - Iniciando Excel-SQL Integration v1.0.0
+2025-08-19 17:06:52,926 - __main__ - INFO - Iniciando aplicación
+2025-08-19 17:06:52,926 - __main__ - INFO - Mostrando diálogo de configuración de conexión
+2025-08-19 17:06:52,985 - connection_dialog - INFO - Configuración cargada desde archivo
+2025-08-19 17:06:58,520 - connection - INFO - Conexión a base de datos exitosa
+2025-08-19 17:06:58,528 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-19 17:06:58,528 - __main__ - INFO - Conexión configurada para servidor: P18PPAD20\SQLEXPRESS
+2025-08-19 17:06:58,549 - connection - INFO - Conexión a base de datos exitosa
+2025-08-19 17:06:58,549 - __main__ - INFO - Conexión a base de datos inicializada exitosamente
+2025-08-19 17:06:58,550 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-19 17:06:59,806 - __main__ - INFO - Aplicación iniciada para usuario: P18PPAD20\franklin.cardona
+2025-08-19 17:07:00,158 - __main__ - INFO - Iniciando interfaz principal <connection.DatabaseConnection object at 0x0000024268CCF790>
+2025-08-19 17:07:00,290 - main_interface - INFO - Esquemas cargados: 2
+2025-08-19 17:07:11,592 - __main__ - INFO - Aplicación finalizada exitosamente
+2025-08-19 17:07:11,592 - __main__ - INFO - Cerrando conexión a base de datos
+2025-08-19 17:07:11,593 - __main__ - INFO - Recursos limpiados exitosamente
+2025-08-19 17:10:53,581 - __main__ - INFO - Iniciando Excel-SQL Integration v1.0.0
+2025-08-19 17:10:53,581 - __main__ - INFO - Iniciando aplicación
+2025-08-19 17:10:53,582 - __main__ - INFO - Mostrando diálogo de configuración de conexión
+2025-08-19 17:10:53,630 - connection_dialog - INFO - Configuración cargada desde archivo
+2025-08-19 17:10:56,800 - connection - INFO - Conexión a base de datos exitosa
+2025-08-19 17:10:56,816 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-19 17:10:56,816 - __main__ - INFO - Conexión configurada para servidor: P18PPAD20\SQLEXPRESS
+2025-08-19 17:10:56,839 - connection - INFO - Conexión a base de datos exitosa
+2025-08-19 17:10:56,840 - __main__ - INFO - Conexión a base de datos inicializada exitosamente
+2025-08-19 17:10:56,843 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-19 17:10:57,942 - __main__ - INFO - Aplicación iniciada para usuario: P18PPAD20\franklin.cardona
+2025-08-19 17:10:58,330 - __main__ - INFO - Iniciando interfaz principal <connection.DatabaseConnection object at 0x00000152F620F790>
+2025-08-19 17:10:58,422 - main_interface - INFO - Esquemas cargados: 3
+2025-08-19 17:11:14,051 - main_interface - INFO - Archivo Excel cargado: D:/Franklin.Cardona/Tableros PowerBI/Recaudo/BD RECAUDO-001-31102023.xlsx
+2025-08-19 17:11:16,761 - main_interface - INFO - Tablas cargadas para esquema dbo: 23
+2025-08-19 17:11:17,792 - main_interface - INFO - Esquemas cargados: 3
+2025-08-19 17:11:21,772 - main_interface - INFO - Estructura cargada para dbo.DimBancos-ADRES-RF
+2025-08-19 17:11:25,605 - table_mapper - INFO - Iniciando mapeo de 16 columnas Excel a 3 columnas SQL
+2025-08-19 17:11:25,612 - table_mapper - INFO - Mapeo completado: 1/16 columnas mapeadas con alta confianza
+2025-08-19 17:11:25,612 - main_interface - INFO - Mapeo automático completado: 1/16
+2025-08-19 17:11:36,363 - main_interface - INFO - Estructura cargada para dbo.DimBancos-ADRES-RF
+2025-08-19 17:12:25,131 - __main__ - INFO - Aplicación finalizada exitosamente
+2025-08-19 17:12:25,131 - __main__ - INFO - Cerrando conexión a base de datos
+2025-08-19 17:12:25,133 - __main__ - INFO - Recursos limpiados exitosamente
+2025-08-19 17:27:33,878 - __main__ - INFO - Iniciando Excel-SQL Integration v1.0.0
+2025-08-19 17:27:33,878 - __main__ - INFO - Iniciando aplicación
+2025-08-19 17:27:33,878 - __main__ - INFO - Mostrando diálogo de configuración de conexión
+2025-08-19 17:27:33,931 - connection_dialog - INFO - Configuración cargada desde archivo
+2025-08-19 17:27:37,465 - connection - INFO - Conexión a base de datos exitosa
+2025-08-19 17:27:37,530 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-19 17:27:37,530 - __main__ - INFO - Conexión configurada para servidor: P18PPAD20\SQLEXPRESS
+2025-08-19 17:27:37,554 - connection - INFO - Conexión a base de datos exitosa
+2025-08-19 17:27:37,554 - __main__ - INFO - Conexión a base de datos inicializada exitosamente
+2025-08-19 17:27:37,554 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-19 17:27:39,560 - __main__ - INFO - Aplicación iniciada para usuario: P18PPAD20\franklin.cardona
+2025-08-19 17:27:41,102 - __main__ - INFO - Iniciando interfaz principal <connection.DatabaseConnection object at 0x00000205B0BFF790>
+2025-08-19 17:27:41,189 - main_interface - INFO - Esquemas cargados: 3
+2025-08-19 17:27:53,269 - main_interface - INFO - Archivo Excel cargado: D:/Franklin.Cardona/Tableros PowerBI/Recaudo/BD RECAUDO-001-31102023.xlsx
+2025-08-19 17:27:55,265 - main_interface - INFO - Tablas cargadas para esquema dbo: 23
+2025-08-19 17:28:02,649 - main_interface - INFO - Estructura cargada para dbo.DimBancos-ADRES-RF
+2025-08-19 17:28:20,234 - table_mapper - INFO - Iniciando mapeo de 16 columnas Excel a 3 columnas SQL
+2025-08-19 17:28:20,234 - table_mapper - INFO - Mapeo completado: 1/16 columnas mapeadas con alta confianza
+2025-08-19 17:28:20,234 - main_interface - INFO - Mapeo automático completado: 1/16
+2025-08-19 17:28:38,971 - __main__ - INFO - Aplicación finalizada exitosamente
+2025-08-19 17:28:38,971 - __main__ - INFO - Cerrando conexión a base de datos
+2025-08-19 17:28:38,971 - __main__ - INFO - Recursos limpiados exitosamente
+2025-08-19 17:30:04,684 - __main__ - INFO - Iniciando Excel-SQL Integration v1.0.0
+2025-08-19 17:30:04,684 - __main__ - INFO - Iniciando aplicación
+2025-08-19 17:30:04,684 - __main__ - INFO - Mostrando diálogo de configuración de conexión
+2025-08-19 17:30:04,761 - connection_dialog - INFO - Configuración cargada desde archivo
+2025-08-19 17:30:06,579 - connection - INFO - Conexión a base de datos exitosa
+2025-08-19 17:30:06,634 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-19 17:30:06,634 - __main__ - INFO - Conexión configurada para servidor: P18PPAD20\SQLEXPRESS
+2025-08-19 17:30:06,655 - connection - INFO - Conexión a base de datos exitosa
+2025-08-19 17:30:06,655 - __main__ - INFO - Conexión a base de datos inicializada exitosamente
+2025-08-19 17:30:06,664 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-19 17:30:07,797 - __main__ - INFO - Aplicación iniciada para usuario: P18PPAD20\franklin.cardona
+2025-08-19 17:30:09,235 - __main__ - INFO - Iniciando interfaz principal <connection.DatabaseConnection object at 0x00000243C5908E50>
+2025-08-19 17:30:09,316 - main_interface - INFO - Esquemas cargados: 3
+2025-08-19 17:30:22,975 - main_interface - INFO - Archivo Excel cargado: D:/Franklin.Cardona/Tableros PowerBI/Recaudo/BD RECAUDO-001-31102023.xlsx
+2025-08-19 17:30:26,295 - main_interface - INFO - Tablas cargadas para esquema dbo: 23
+2025-08-19 17:30:26,818 - main_interface - INFO - Esquemas cargados: 3
+2025-08-19 17:30:31,185 - main_interface - INFO - Estructura cargada para dbo.DimBancos-ADRES-RF
+2025-08-19 17:46:18,055 - main_interface - INFO - Estructura cargada para dbo.DimBENEFAPORT
+2025-08-19 17:51:00,724 - __main__ - INFO - Aplicación finalizada exitosamente
+2025-08-19 17:51:00,724 - __main__ - INFO - Cerrando conexión a base de datos
+2025-08-19 17:51:00,725 - __main__ - INFO - Recursos limpiados exitosamente
+2025-08-19 17:51:05,643 - __main__ - INFO - Iniciando Excel-SQL Integration v1.0.0
+2025-08-19 17:51:05,643 - __main__ - INFO - Iniciando aplicación
+2025-08-19 17:51:05,645 - __main__ - INFO - Mostrando diálogo de configuración de conexión
+2025-08-19 17:51:05,698 - connection_dialog - INFO - Configuración cargada desde archivo
+2025-08-19 17:51:11,888 - connection - INFO - Conexión a base de datos exitosa
+2025-08-19 17:51:11,909 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-19 17:51:11,909 - __main__ - INFO - Conexión configurada para servidor: P18PPAD20\SQLEXPRESS
+2025-08-19 17:51:11,931 - connection - INFO - Conexión a base de datos exitosa
+2025-08-19 17:51:11,932 - __main__ - INFO - Conexión a base de datos inicializada exitosamente
+2025-08-19 17:51:11,932 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-19 17:51:13,114 - __main__ - INFO - Aplicación iniciada para usuario: P18PPAD20\franklin.cardona
+2025-08-19 17:51:14,593 - __main__ - INFO - Iniciando interfaz principal <connection.DatabaseConnection object at 0x000001952B338E50>
+2025-08-19 17:51:14,687 - main_interface - INFO - Esquemas cargados: 3
+2025-08-19 17:51:28,764 - main_interface - INFO - Archivo Excel cargado: D:/Franklin.Cardona/Tableros PowerBI/Recaudo/BD RECAUDO-001-31102023.xlsx
+2025-08-19 17:51:30,029 - main_interface - INFO - Tablas cargadas para esquema dbo: 23
+2025-08-19 17:51:33,484 - main_interface - INFO - Estructura cargada para dbo.DimBENEFAPORT
+2025-08-19 17:51:37,994 - main_interface - ERROR - Error en mapeo automático: string indices must be integers, not 'str'
+2025-08-19 17:51:45,454 - main_interface - INFO - Estructura cargada para dbo.DimCALENDARIO
+2025-08-19 17:51:49,098 - main_interface - ERROR - Error en mapeo automático: string indices must be integers, not 'str'
+2025-08-19 17:51:52,385 - main_interface - INFO - Estructura cargada para dbo.DimBancos-ADRES-RF
+2025-08-19 17:51:56,715 - main_interface - ERROR - Error en mapeo automático: string indices must be integers, not 'str'
+2025-08-19 17:52:10,395 - main_interface - ERROR - Error en mapeo automático: string indices must be integers, not 'str'
+2025-08-19 17:52:13,975 - main_interface - INFO - Estructura cargada para dbo.DimCALENDARIO
+2025-08-19 17:52:16,915 - main_interface - ERROR - Error en mapeo automático: string indices must be integers, not 'str'
+2025-08-19 17:52:22,886 - __main__ - INFO - Aplicación finalizada exitosamente
+2025-08-19 17:52:22,886 - __main__ - INFO - Cerrando conexión a base de datos
+2025-08-19 17:52:22,893 - __main__ - INFO - Recursos limpiados exitosamente
+2025-08-20 11:51:10,988 - __main__ - INFO - Iniciando Excel-SQL Integration v1.0.0
+2025-08-20 11:51:10,989 - __main__ - INFO - Iniciando aplicación
+2025-08-20 11:51:10,989 - __main__ - INFO - Mostrando diálogo de configuración de conexión
+2025-08-20 11:51:11,047 - connection_dialog - INFO - Configuración cargada desde archivo
+2025-08-20 11:51:15,019 - connection - INFO - Conexión a base de datos exitosa
+2025-08-20 11:51:15,106 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-20 11:51:15,106 - __main__ - INFO - Conexión configurada para servidor: P18PPAD20\SQLEXPRESS
+2025-08-20 11:51:15,119 - connection - INFO - Conexión a base de datos exitosa
+2025-08-20 11:51:15,120 - __main__ - INFO - Conexión a base de datos inicializada exitosamente
+2025-08-20 11:51:15,120 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-20 11:51:16,286 - __main__ - INFO - Aplicación iniciada para usuario: P18PPAD20\Franklin.Cardona
+2025-08-20 11:51:18,112 - __main__ - INFO - Iniciando interfaz principal <connection.DatabaseConnection object at 0x0000023C6625BC50>
+2025-08-20 11:51:18,190 - main_interface - INFO - Esquemas cargados: 3
+2025-08-20 11:51:31,523 - main_interface - INFO - Archivo Excel cargado: D:/Franklin.Cardona/Tableros PowerBI/Recaudo/BD RECAUDO-001-31102023.xlsx
+2025-08-20 11:51:40,264 - main_interface - INFO - Tablas cargadas para esquema dbo: 23
+2025-08-20 11:51:45,862 - main_interface - INFO - Estructura cargada para dbo.DimBancos-ADRES-RF
+2025-08-20 11:51:50,748 - table_mapper - INFO - Iniciando mapeo de 16 columnas Excel a 3 columnas SQL
+2025-08-20 11:51:50,750 - table_mapper - INFO - Mapeo completado: 1/16 columnas mapeadas con alta confianza
+2025-08-20 11:51:50,750 - main_interface - INFO - Mapeo automático completado: 1/16
+2025-08-20 11:52:10,123 - main_interface - INFO - Estructura cargada para dbo.DimEPS2
+2025-08-20 11:52:11,046 - table_mapper - INFO - Iniciando mapeo de 16 columnas Excel a 4 columnas SQL
+2025-08-20 11:52:11,049 - table_mapper - INFO - Mapeo completado: 0/16 columnas mapeadas con alta confianza
+2025-08-20 11:52:11,049 - main_interface - INFO - Mapeo automático completado: 0/16
+2025-08-20 11:52:18,482 - __main__ - INFO - Aplicación finalizada exitosamente
+2025-08-20 11:52:18,482 - __main__ - INFO - Cerrando conexión a base de datos
+2025-08-20 11:52:18,483 - __main__ - INFO - Recursos limpiados exitosamente
+2025-08-20 11:56:23,819 - __main__ - INFO - Iniciando Excel-SQL Integration v1.0.0
+2025-08-20 11:56:23,820 - __main__ - INFO - Iniciando aplicación
+2025-08-20 11:56:23,820 - __main__ - INFO - Mostrando diálogo de configuración de conexión
+2025-08-20 11:56:23,864 - connection_dialog - INFO - Configuración cargada desde archivo
+2025-08-20 11:56:26,789 - connection - INFO - Conexión a base de datos exitosa
+2025-08-20 11:56:26,804 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-20 11:56:26,804 - __main__ - INFO - Conexión configurada para servidor: P18PPAD20\SQLEXPRESS
+2025-08-20 11:56:26,815 - connection - INFO - Conexión a base de datos exitosa
+2025-08-20 11:56:26,816 - __main__ - INFO - Conexión a base de datos inicializada exitosamente
+2025-08-20 11:56:26,816 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-20 11:56:27,882 - __main__ - INFO - Aplicación iniciada para usuario: P18PPAD20\Franklin.Cardona
+2025-08-20 11:56:29,613 - __main__ - INFO - Iniciando interfaz principal <connection.DatabaseConnection object at 0x000001D3B423BD90>
+2025-08-20 11:56:29,691 - main_interface - INFO - Esquemas cargados: 3
+2025-08-20 11:56:41,292 - main_interface - INFO - Archivo Excel cargado: D:/Franklin.Cardona/Tableros PowerBI/Recaudo/BD RECAUDO-001-31102023.xlsx
+2025-08-20 11:56:48,510 - main_interface - INFO - Tablas cargadas para esquema dbo: 23
+2025-08-20 11:56:52,882 - main_interface - INFO - Estructura cargada para dbo.DimBancos-ADRES-RF
+2025-08-20 11:56:57,400 - table_mapper - INFO - Iniciando mapeo de 16 columnas Excel a 3 columnas SQL
+2025-08-20 11:56:57,402 - table_mapper - INFO - Mapeo completado: 1/16 columnas mapeadas con alta confianza
+2025-08-20 11:56:57,402 - main_interface - INFO - Mapeo automático completado: 1/16
+2025-08-20 11:57:16,993 - __main__ - INFO - Aplicación finalizada exitosamente
+2025-08-20 11:57:16,993 - __main__ - INFO - Cerrando conexión a base de datos
+2025-08-20 11:57:16,993 - __main__ - INFO - Recursos limpiados exitosamente
+2025-08-20 11:58:46,420 - __main__ - INFO - Iniciando Excel-SQL Integration v1.0.0
+2025-08-20 11:58:46,420 - __main__ - INFO - Iniciando aplicación
+2025-08-20 11:58:46,421 - __main__ - INFO - Mostrando diálogo de configuración de conexión
+2025-08-20 11:58:46,471 - connection_dialog - INFO - Configuración cargada desde archivo
+2025-08-20 11:58:49,276 - connection - INFO - Conexión a base de datos exitosa
+2025-08-20 11:58:49,285 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-20 11:58:49,285 - __main__ - INFO - Conexión configurada para servidor: P18PPAD20\SQLEXPRESS
+2025-08-20 11:58:49,297 - connection - INFO - Conexión a base de datos exitosa
+2025-08-20 11:58:49,298 - __main__ - INFO - Conexión a base de datos inicializada exitosamente
+2025-08-20 11:58:49,298 - connection_dialog - INFO - Configuración guardada exitosamente
+2025-08-20 11:58:50,635 - __main__ - INFO - Aplicación iniciada para usuario: P18PPAD20\Franklin.Cardona
+2025-08-20 11:58:50,970 - __main__ - INFO - Iniciando interfaz principal <connection.DatabaseConnection object at 0x0000018890ABBD90>
+2025-08-20 11:58:51,044 - main_interface - INFO - Esquemas cargados: 3
+2025-08-20 11:59:03,364 - main_interface - INFO - Archivo Excel cargado: D:/Franklin.Cardona/Tableros PowerBI/Recaudo/BD RECAUDO-001-31102023.xlsx
+2025-08-20 11:59:06,533 - main_interface - INFO - Tablas cargadas para esquema dbo: 23
+2025-08-20 11:59:10,499 - main_interface - INFO - Esquemas cargados: 3
+2025-08-20 11:59:12,824 - main_interface - INFO - Estructura cargada para dbo.DimBancos-ADRES-RF
+2025-08-20 11:59:18,152 - table_mapper - INFO - Iniciando mapeo de 3 columnas Excel a 3 columnas SQL
+2025-08-20 11:59:18,152 - table_mapper - INFO - Mapeo completado: 3/3 columnas mapeadas con alta confianza
+2025-08-20 11:59:18,153 - main_interface - INFO - Mapeo automático completado: 3/3
+2025-08-20 11:59:26,231 - main_interface - INFO - Estructura cargada para dbo.DimConcepto
+2025-08-20 11:59:32,635 - table_mapper - INFO - Iniciando mapeo de 9 columnas Excel a 9 columnas SQL
+2025-08-20 11:59:32,637 - table_mapper - INFO - Mapeo completado: 9/9 columnas mapeadas con alta confianza
+2025-08-20 11:59:32,638 - main_interface - INFO - Mapeo automático completado: 9/9
+2025-08-20 11:59:47,700 - main_interface - INFO - Estructura cargada para dbo.FactRECAUDO2025
+2025-08-20 11:59:53,822 - table_mapper - INFO - Iniciando mapeo de 28 columnas Excel a 28 columnas SQL
+2025-08-20 11:59:53,834 - table_mapper - INFO - Mapeo completado: 28/28 columnas mapeadas con alta confianza
+2025-08-20 11:59:53,834 - main_interface - INFO - Mapeo automático completado: 28/28
+2025-08-20 11:59:57,210 - table_mapper - INFO - Iniciando mapeo de 28 columnas Excel a 28 columnas SQL
+2025-08-20 11:59:57,221 - table_mapper - INFO - Mapeo completado: 28/28 columnas mapeadas con alta confianza
+2025-08-20 11:59:57,223 - main_interface - INFO - Mapeo automático completado: 28/28
+2025-08-20 12:00:52,116 - enhanced_processor - INFO - DataFrame limpio: 410141 filas, 28 columnas
+2025-08-20 12:00:52,176 - enhanced_processor - INFO - Columnas renombradas: 28
+2025-08-20 12:05:49,245 - __main__ - INFO - Aplicación finalizada exitosamente
+2025-08-20 12:05:49,245 - __main__ - INFO - Cerrando conexión a base de datos
+2025-08-20 12:05:49,245 - __main__ - INFO - Recursos limpiados exitosamente

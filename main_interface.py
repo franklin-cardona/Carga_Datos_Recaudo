@@ -14,6 +14,16 @@ import logging
 from pathlib import Path
 import pandas as pd
 
+# Importaciones absolutas para evitar problemas de importación relativa
+try:
+    from table_mapper import TableMapper
+    from enhanced_processor import EnhancedExcelProcessor, ProcessingResult
+except ImportError as e:
+    logging.error(f"Error de importación en MainInterface: {e}")
+    # Manejar el error de importación de forma más robusta si es necesario
+    # Por ahora, simplemente re-lanzar o mostrar un mensaje
+    raise
+
 
 class MainInterface:
     """
@@ -42,7 +52,12 @@ class MainInterface:
         self.available_tables = {}
         self.selected_schema = None
         self.selected_table = None
+        self.table_structure = None  # Almacena la estructura de la tabla SQL seleccionada
         self.column_mappings = {}
+
+        # Instancias de procesadores
+        self.table_mapper = TableMapper(self.db_connection)
+        self.excel_processor = EnhancedExcelProcessor(self.db_connection)
 
         # Widgets principales
         self.root = None
@@ -52,8 +67,7 @@ class MainInterface:
         self.mapping_frame = None
         self.progress_frame = None
 
-        # Variables de UI (se inicializarán en create_interface)
-        self.logger.info("Inicializando interfaz principal")
+        # Variables de UI
         self.file_var = None
         self.schema_var = None
         self.table_var = None
@@ -117,28 +131,32 @@ class MainInterface:
             raise
 
     def _setup_styles(self):
-        """Configura los estilos de la interfaz."""
+        """
+        Configura los estilos de la interfaz.
+        """
         try:
             style = ttk.Style()
 
             # Configurar tema
-            style.theme_use('clam')
+            style.theme_use("clam")
 
             # Estilos personalizados
-            style.configure('Header.TLabel', font=('Arial', 14, 'bold'))
-            style.configure('Section.TLabel', font=('Arial', 11, 'bold'))
-            style.configure('Info.TLabel', font=(
-                'Arial', 9), foreground='blue')
-            style.configure('Success.TLabel', font=(
-                'Arial', 9), foreground='green')
-            style.configure('Error.TLabel', font=(
-                'Arial', 9), foreground='red')
+            style.configure("Header.TLabel", font=("Arial", 14, "bold"))
+            style.configure("Section.TLabel", font=("Arial", 11, "bold"))
+            style.configure("Info.TLabel", font=(
+                "Arial", 9), foreground="blue")
+            style.configure("Success.TLabel", font=(
+                "Arial", 9), foreground="green")
+            style.configure("Error.TLabel", font=(
+                "Arial", 9), foreground="red")
 
         except Exception as e:
             self.logger.warning(f"Error configurando estilos: {str(e)}")
 
     def _create_header_frame(self):
-        """Crea el frame del encabezado."""
+        """
+        Crea el frame del encabezado.
+        """
         header_frame = ttk.Frame(self.root)
         header_frame.pack(fill=tk.X, padx=10, pady=5)
 
@@ -146,7 +164,7 @@ class MainInterface:
         title_label = ttk.Label(
             header_frame,
             text="Integración Excel - SQL Server",
-            style='Header.TLabel'
+            style="Header.TLabel"
         )
         title_label.pack(side=tk.LEFT)
 
@@ -155,12 +173,14 @@ class MainInterface:
         info_label = ttk.Label(
             header_frame,
             text=connection_info,
-            style='Info.TLabel'
+            style="Info.TLabel"
         )
         info_label.pack(side=tk.RIGHT)
 
     def _create_file_selection_frame(self):
-        """Crea el frame de selección de archivos."""
+        """
+        Crea el frame de selección de archivos.
+        """
         # Asegurarse de que las variables de UI estén inicializadas
         # Crear una variable temporal si self.file_var es None
         file_var = self.file_var if self.file_var else tk.StringVar()
@@ -177,12 +197,8 @@ class MainInterface:
         ttk.Label(inner_frame, text="Archivo:").pack(side=tk.LEFT)
 
         file_entry = ttk.Entry(
-            inner_frame, textvariable=file_var, width=60, state='readonly')
+            inner_frame, textvariable=file_var, width=60, state="readonly")
         file_entry.pack(side=tk.LEFT, padx=(5, 5), fill=tk.X, expand=True)
-
-        # Guardar la variable temporal en self.file_var si era None
-        if not self.file_var:
-            self.file_var = file_var
 
         # Botón de selección
         browse_button = ttk.Button(
@@ -194,11 +210,13 @@ class MainInterface:
 
         # Información del archivo
         self.file_info_label = ttk.Label(
-            self.file_frame, text="", style='Info.TLabel')
+            self.file_frame, text="", style="Info.TLabel")
         self.file_info_label.pack(anchor=tk.W, pady=(5, 0))
 
     def _create_schema_selection_frame(self):
-        """Crea el frame de selección de esquema."""
+        """
+        Crea el frame de selección de esquema.
+        """
         # Asegurarse de que las variables de UI estén inicializadas
         # Crear una variable temporal si self.schema_var es None
         schema_var = self.schema_var if self.schema_var else tk.StringVar()
@@ -214,7 +232,7 @@ class MainInterface:
             self.schema_frame,
             textvariable=schema_var,
             values=[],
-            state='readonly',
+            state="readonly",
             width=30
         )
 
@@ -222,7 +240,7 @@ class MainInterface:
         if not self.schema_var:
             self.schema_var = schema_var
         self.schema_combo.pack(side=tk.LEFT, padx=(5, 10))
-        self.schema_combo.bind('<<ComboboxSelected>>',
+        self.schema_combo.bind("<<ComboboxSelected>>",
                                self._on_schema_selected)
 
         # Botón de actualizar esquemas
@@ -235,11 +253,13 @@ class MainInterface:
 
         # Información del esquema
         self.schema_info_label = ttk.Label(
-            self.schema_frame, text="", style='Info.TLabel')
+            self.schema_frame, text="", style="Info.TLabel")
         self.schema_info_label.pack(side=tk.RIGHT)
 
     def _create_table_selection_frame(self):
-        """Crea el frame de selección de tabla."""
+        """
+        Crea el frame de selección de tabla.
+        """
         # Asegurarse de que las variables de UI estén inicializadas
         # Crear una variable temporal si self.table_var es None
         table_var = self.table_var if self.table_var else tk.StringVar()
@@ -255,15 +275,14 @@ class MainInterface:
             self.table_frame,
             textvariable=table_var,
             values=[],
-            state='readonly',
+            state="readonly",
             width=40
         )
-
         # Guardar la variable temporal en self.table_var si era None
         if not self.table_var:
             self.table_var = table_var
         self.table_combo.pack(side=tk.LEFT, padx=(5, 10))
-        self.table_combo.bind('<<ComboboxSelected>>', self._on_table_selected)
+        self.table_combo.bind("<<ComboboxSelected>>", self._on_table_selected)
 
         # Botón de vista previa de tabla
         preview_button = ttk.Button(
@@ -275,11 +294,13 @@ class MainInterface:
 
         # Información de la tabla
         self.table_info_label = ttk.Label(
-            self.table_frame, text="", style='Info.TLabel')
+            self.table_frame, text="", style="Info.TLabel")
         self.table_info_label.pack(side=tk.RIGHT)
 
     def _create_mapping_frame(self):
-        """Crea el frame de mapeo de columnas."""
+        """
+        Crea el frame de mapeo de columnas.
+        """
         self.mapping_frame = ttk.LabelFrame(
             self.root, text="4. Mapeo de Columnas", padding=10)
         self.mapping_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
@@ -306,28 +327,28 @@ class MainInterface:
 
         # Información de mapeo
         self.mapping_info_label = ttk.Label(
-            button_frame, text="", style='Info.TLabel')
+            button_frame, text="", style="Info.TLabel")
         self.mapping_info_label.pack(side=tk.RIGHT)
 
         # Treeview para mostrar mapeo
-        columns = ('excel_column', 'sql_column',
-                   'data_type', 'confidence', 'status')
+        columns = ("excel_column", "sql_column",
+                   "data_type", "confidence", "status")
         self.mapping_tree = ttk.Treeview(
-            self.mapping_frame, columns=columns, show='headings', height=8)
+            self.mapping_frame, columns=columns, show="headings", height=8)
 
         # Configurar encabezados
-        self.mapping_tree.heading('excel_column', text='Columna Excel')
-        self.mapping_tree.heading('sql_column', text='Columna SQL')
-        self.mapping_tree.heading('data_type', text='Tipo de Dato')
-        self.mapping_tree.heading('confidence', text='Confianza')
-        self.mapping_tree.heading('status', text='Estado')
+        self.mapping_tree.heading("excel_column", text="Columna Excel")
+        self.mapping_tree.heading("sql_column", text="Columna SQL")
+        self.mapping_tree.heading("data_type", text="Tipo de Dato")
+        self.mapping_tree.heading("confidence", text="Confianza")
+        self.mapping_tree.heading("status", text="Estado")
 
         # Configurar anchos de columna
-        self.mapping_tree.column('excel_column', width=150)
-        self.mapping_tree.column('sql_column', width=150)
-        self.mapping_tree.column('data_type', width=100)
-        self.mapping_tree.column('confidence', width=80)
-        self.mapping_tree.column('status', width=100)
+        self.mapping_tree.column("excel_column", width=150)
+        self.mapping_tree.column("sql_column", width=150)
+        self.mapping_tree.column("data_type", width=100)
+        self.mapping_tree.column("confidence", width=80)
+        self.mapping_tree.column("status", width=100)
 
         # Scrollbar para el treeview
         mapping_scrollbar = ttk.Scrollbar(
@@ -339,7 +360,9 @@ class MainInterface:
         mapping_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
     def _create_progress_frame(self):
-        """Crea el frame de progreso."""
+        """
+        Crea el frame de progreso.
+        """
         # Asegurarse de que las variables de UI estén inicializadas
         # Crear una variable temporal si self.progress_var es None
         progress_var = self.progress_var if self.progress_var else tk.DoubleVar()
@@ -365,7 +388,7 @@ class MainInterface:
             button_frame,
             text="Procesar Archivo",
             command=self._process_file,
-            state='disabled'
+            state="disabled"
         )
         self.process_button.pack(side=tk.LEFT, padx=(5, 0))
 
@@ -374,7 +397,7 @@ class MainInterface:
             button_frame,
             text="Cancelar",
             command=self._cancel_processing,
-            state='disabled'
+            state="disabled"
         )
         self.cancel_button.pack(side=tk.LEFT, padx=(5, 0))
 
@@ -383,16 +406,17 @@ class MainInterface:
             self.progress_frame,
             variable=progress_var,
             maximum=100,
-            mode='determinate'
+            mode="determinate"
         )
-
         # Guardar la variable temporal en self.progress_var si era None
         if not self.progress_var:
             self.progress_var = progress_var
         self.progress_bar.pack(fill=tk.X, pady=(0, 5))
 
     def _create_status_frame(self):
-        """Crea el frame de estado."""
+        """
+        Crea el frame de estado.
+        """
         # Asegurarse de que las variables de UI estén inicializadas
         # Crear una variable temporal si self.status_var es None
         status_var = self.status_var if self.status_var else tk.StringVar(
@@ -405,7 +429,7 @@ class MainInterface:
         self.status_label = ttk.Label(
             status_frame,
             textvariable=status_var,
-            style='Info.TLabel'
+            style="Info.TLabel"
         )
         self.status_label.pack(side=tk.LEFT)
 
@@ -422,7 +446,9 @@ class MainInterface:
         exit_button.pack(side=tk.RIGHT)
 
     def _center_window(self):
-        """Centra la ventana en la pantalla."""
+        """
+        Centra la ventana en la pantalla.
+        """
         try:
             if self.root:
                 self.root.update_idletasks()
@@ -435,13 +461,15 @@ class MainInterface:
             self.logger.warning(f"Error centrando ventana: {str(e)}")
 
     def _browse_file(self):
-        """Abre el diálogo de selección de archivo Excel."""
+        """
+        Abre el diálogo de selección de archivo Excel.
+        """
         try:
             file_types = [
-                ('Archivos Excel', '*.xlsx *.xls'),
-                ('Excel 2007+', '*.xlsx'),
-                ('Excel 97-2003', '*.xls'),
-                ('Todos los archivos', '*.*')
+                ("Archivos Excel", "*.xlsx *.xls"),
+                ("Excel 2007+", "*.xlsx"),
+                ("Excel 97-2003", "*.xls"),
+                ("Todos los archivos", "*.*")
             ]
 
             filename = filedialog.askopenfilename(
@@ -452,8 +480,7 @@ class MainInterface:
 
             if filename:
                 self.selected_file = filename
-                if self.file_var:
-                    self.file_var.set(filename)
+                self.file_var.set(filename)
                 self._load_excel_file()
 
         except Exception as e:
@@ -462,7 +489,9 @@ class MainInterface:
                 "Error", f"Error seleccionando archivo:\n{str(e)}")
 
     def _load_excel_file(self):
-        """Carga y analiza el archivo Excel seleccionado."""
+        """
+        Carga y analiza el archivo Excel seleccionado.
+        """
         try:
             if not self.selected_file:
                 return
@@ -472,25 +501,42 @@ class MainInterface:
             if self.root:
                 self.root.update()
 
-            # Leer archivo Excel
+            # Usar EnhancedExcelProcessor para la validación inicial del archivo
+            file_validation_result = self.excel_processor._validate_file(
+                self.selected_file)
+            if not file_validation_result["is_valid"]:
+                messagebox.showerror("Error de Archivo", "\n".join(
+                    file_validation_result["errors"]))
+                if self.status_var:
+                    self.status_var.set("Error al cargar archivo Excel")
+                if self.file_var:
+                    self.file_var.set("")
+                self.selected_file = None
+                self.file_info_label.config(text="")
+                return
+
+            # Leer la primera hoja para análisis inicial
             excel_file = pd.ExcelFile(self.selected_file)
+            first_sheet = excel_file.sheet_names[0]
+            df_sample = pd.read_excel(
+                self.selected_file, sheet_name=first_sheet, nrows=5)
 
             # Obtener información del archivo
             file_size = os.path.getsize(self.selected_file)
             file_size_mb = file_size / (1024 * 1024)
 
-            # Leer la primera hoja para análisis
-            first_sheet = excel_file.sheet_names[0]
-            df = pd.read_excel(self.selected_file,
-                               sheet_name=first_sheet, nrows=5)
+            # Obtener el número total de filas de la primera hoja
+            # Esto puede ser lento para archivos muy grandes, considerar optimización
+            total_rows = len(pd.read_excel(
+                self.selected_file, sheet_name=first_sheet))
 
             self.excel_data = {
-                'file_path': self.selected_file,
-                'file_size': file_size,
-                'sheet_names': excel_file.sheet_names,
-                'sample_data': df,
-                'columns': df.columns.tolist(),
-                'total_rows': len(pd.read_excel(self.selected_file, sheet_name=first_sheet))
+                "file_path": self.selected_file,
+                "file_size": file_size,
+                "sheet_names": excel_file.sheet_names,
+                "sample_data": df_sample,
+                "columns": df_sample.columns.tolist(),
+                "total_rows": total_rows
             }
 
             # Actualizar información del archivo
@@ -498,7 +544,7 @@ class MainInterface:
                 f"Archivo: {Path(self.selected_file).name} "
                 f"({file_size_mb:.1f} MB) | "
                 f"Hojas: {len(excel_file.sheet_names)} | "
-                f"Columnas: {len(df.columns)} | "
+                f"Columnas: {len(df_sample.columns)} | "
                 f"Filas: {self.excel_data['total_rows']}"
             )
             self.file_info_label.config(text=info_text)
@@ -515,7 +561,9 @@ class MainInterface:
                 self.status_var.set("Error cargando archivo Excel")
 
     def _load_available_schemas(self):
-        """Carga los esquemas disponibles de la base de datos."""
+        """
+        Carga los esquemas disponibles de la base de datos.
+        """
         try:
             if self.status_var:
                 self.status_var.set("Cargando esquemas disponibles...")
@@ -526,17 +574,20 @@ class MainInterface:
             schema_query = """
                 SELECT DISTINCT SCHEMA_NAME
                 FROM INFORMATION_SCHEMA.SCHEMATA
-                WHERE SCHEMA_NAME NOT IN ('information_schema', 'sys', 'db_owner', 'db_accessadmin', 
-                                                         'db_securityadmin', 'db_ddladmin', 'db_datareader', 
-                                         'db_datawriter', 'db_denydatareader', 'db_denydatawriter')
+                WHERE SCHEMA_NAME NOT IN (
+                    'information_schema', 'sys', 'guest', 'public',
+                    'db_owner', 'db_accessadmin', 'db_securityadmin', 
+                    'db_ddladmin', 'db_datareader', 'db_datawriter',
+                    'db_denydatareader', 'db_denydatawriter'
+                )
                 ORDER BY SCHEMA_NAME
             """
 
             results = self.db_connection.execute_query(schema_query)
-            self.available_schemas = [row['SCHEMA_NAME'] for row in results]
+            self.available_schemas = [row["SCHEMA_NAME"] for row in results]
 
             # Actualizar combobox
-            self.schema_combo['values'] = self.available_schemas
+            self.schema_combo["values"] = self.available_schemas
 
             # Información de esquemas
             self.schema_info_label.config(
@@ -566,7 +617,9 @@ class MainInterface:
             self.logger.error(f"Error seleccionando esquema: {str(e)}")
 
     def _load_schema_tables(self):
-        """Carga las tablas del esquema seleccionado."""
+        """
+        Carga las tablas del esquema seleccionado.
+        """
         try:
             if not self.selected_schema:
                 return
@@ -591,24 +644,23 @@ class MainInterface:
             # Organizar tablas por tipo
             tables = []
             for row in results:
-                table_name = row['TABLE_NAME']
-                table_type = row['TABLE_TYPE']
+                table_name = row["TABLE_NAME"]
+                table_type = row["TABLE_TYPE"]
                 display_name = f"{table_name} ({table_type})"
                 tables.append(display_name)
 
             self.available_tables[self.selected_schema] = results
 
             # Actualizar combobox de tablas
-            self.table_combo['values'] = tables
-            if self.table_var:
-                self.table_var.set('')  # Limpiar selección previa
+            self.table_combo["values"] = tables
+            self.table_combo.set("")  # Limpiar selección previa
             self.selected_table = None
             self.table_info_label.config(
                 text=f"{len(tables)} tablas encontradas")
 
             # Limpiar mapeo y deshabilitar botones
             self._clear_mapping()
-            self.process_button.config(state='disabled')
+            self.process_button.config(state="disabled")
 
             if self.status_var:
                 self.status_var.set(
@@ -622,10 +674,10 @@ class MainInterface:
             if self.status_var:
                 self.status_var.set("Error cargando tablas")
 
-    # Este método estaba duplicado - se eliminó esta primera versión
-
     def _on_table_selected(self, event=None):
-        """Maneja la selección de tabla."""
+        """
+        Maneja la selección de tabla.
+        """
         try:
             if self.table_var:
                 selected_display = self.table_var.get()
@@ -637,8 +689,39 @@ class MainInterface:
         except Exception as e:
             self.logger.error(f"Error seleccionando tabla: {str(e)}")
 
+    def _find_best_matching_sheet(self, table_name: str, sheet_names: list) -> str:
+        """
+        Busca la hoja de Excel cuyo nombre sea más similar al nombre de la tabla seleccionada.
+        Normaliza los nombres para mejorar la coincidencia y muestra advertencia si la coincidencia es baja.
+        """
+        import re
+        from difflib import SequenceMatcher
+
+        def normalize(s):
+            return re.sub(r'[^a-zA-Z0-9]', '', s).lower()
+
+        table_norm = normalize(table_name)
+        best_match = sheet_names[0]
+        highest_ratio = 0.0
+        for sheet in sheet_names:
+            sheet_norm = normalize(sheet)
+            ratio = SequenceMatcher(None, table_norm, sheet_norm).ratio()
+            if ratio > highest_ratio:
+                highest_ratio = ratio
+                best_match = sheet
+
+        # Si la coincidencia es baja, mostrar advertencia
+        if highest_ratio < 0.5:
+            messagebox.showwarning(
+                "Advertencia",
+                f"No se encontró una hoja de Excel con nombre similar a la tabla seleccionada ('{table_name}'). Se usará la hoja: '{best_match}'."
+            )
+        return best_match
+
     def _load_table_structure(self):
-        """Carga la estructura de la tabla seleccionada."""
+        """
+        Carga la estructura de la tabla seleccionada.
+        """
         try:
             if not self.selected_schema or not self.selected_table:
                 return
@@ -671,13 +754,23 @@ class MainInterface:
 
             self.table_structure = results
 
+            # Seleccionar la hoja de Excel más similar al nombre de la tabla
+            best_sheet = None
+            if self.excel_data and isinstance(self.excel_data, dict) and "sheet_names" in self.excel_data:
+                best_sheet = self._find_best_matching_sheet(
+                    self.selected_table, self.excel_data["sheet_names"])
+                self.excel_data["best_sheet"] = best_sheet
+            elif self.excel_data and isinstance(self.excel_data, dict):
+                self.excel_data["best_sheet"] = None
+
             # Información de la tabla
-            info_text = f"{len(results)} columnas | Listo para mapeo"
+            hoja_info = best_sheet if best_sheet else 'N/A'
+            info_text = f"{len(results)} columnas | Listo para mapeo (Hoja: {hoja_info})"
             self.table_info_label.config(text=info_text)
 
             if self.status_var:
                 self.status_var.set(
-                    f"Estructura de tabla cargada: {len(results)} columnas")
+                    f"Estructura de tabla cargada: {len(results)} columnas (Hoja: {hoja_info})")
             self.logger.info(
                 f"Estructura cargada para {self.selected_schema}.{self.selected_table}")
 
@@ -689,9 +782,11 @@ class MainInterface:
                 self.status_var.set("Error cargando estructura de tabla")
 
     def _preview_table_structure(self):
-        """Muestra una vista previa de la estructura de la tabla."""
+        """
+        Muestra una vista previa de la estructura de la tabla.
+        """
         try:
-            if not hasattr(self, 'table_structure') or not self.table_structure:
+            if not hasattr(self, "table_structure") or not self.table_structure:
                 messagebox.showwarning(
                     "Advertencia", "Primero seleccione una tabla")
                 return
@@ -700,18 +795,18 @@ class MainInterface:
             preview_window = tk.Toplevel(self.root)
             preview_window.title(
                 f"Estructura de {self.selected_schema}.{self.selected_table}")
-            preview_window.geometry("600x400")
+            preview_window.geometry("800x600")
 
             # Treeview para mostrar estructura
-            columns = ('column_name', 'data_type', 'nullable', 'default')
+            columns = ("column_name", "data_type", "nullable", "default")
             tree = ttk.Treeview(
-                preview_window, columns=columns, show='headings')
+                preview_window, columns=columns, show="headings")
 
             # Configurar encabezados
-            tree.heading('column_name', text='Columna')
-            tree.heading('data_type', text='Tipo de Dato')
-            tree.heading('nullable', text='Nullable')
-            tree.heading('default', text='Valor por Defecto')
+            tree.heading("column_name", text="Columna")
+            tree.heading("data_type", text="Tipo de Dato")
+            tree.heading("nullable", text="Nullable")
+            tree.heading("default", text="Valor por Defecto")
 
             # Insertar datos
             for row in self.table_structure:
@@ -724,11 +819,11 @@ class MainInterface:
                         data_type += f",{row['NUMERIC_SCALE']}"
                     data_type += ")"
 
-                tree.insert('', 'end', values=(
-                    row['COLUMN_NAME'],
+                tree.insert("", "end", values=(
+                    row["COLUMN_NAME"],
                     data_type,
-                    row['IS_NULLABLE'],
-                    row['COLUMN_DEFAULT'] or ''
+                    row["IS_NULLABLE"],
+                    row["COLUMN_DEFAULT"] or ""
                 ))
 
             # Scrollbar
@@ -746,9 +841,11 @@ class MainInterface:
                 "Error", f"Error mostrando vista previa:\n{str(e)}")
 
     def _auto_map_columns(self):
-        """Realiza el mapeo automático de columnas usando coincidencia difusa."""
+        """
+        Realiza el mapeo automático de columnas usando coincidencia difusa.
+        """
         try:
-            if not self.excel_data or not hasattr(self, 'table_structure'):
+            if not self.excel_data or not self.table_structure:
                 messagebox.showwarning(
                     "Advertencia", "Seleccione un archivo Excel y una tabla primero")
                 return
@@ -758,18 +855,23 @@ class MainInterface:
             if self.root:
                 self.root.update()
 
-            # Importar el módulo de mapeo (se creará en el siguiente paso)
-            # Importar el módulo de mapeo que acabamos de crear
-            from table_mapper import TableMapper
+            # Obtener la hoja más similar al nombre de la tabla
+            sheet_to_use = None
+            if isinstance(self.excel_data, dict):
+                sheet_to_use = self.excel_data.get("best_sheet")
+                if not sheet_to_use and "sheet_names" in self.excel_data:
+                    sheet_to_use = self.excel_data["sheet_names"][0]
+            if self.selected_file and sheet_to_use:
+                df_sample = pd.read_excel(
+                    self.selected_file, sheet_name=sheet_to_use, nrows=5)
+                excel_columns = df_sample.columns.tolist()
+                self.excel_data["columns"] = excel_columns
+            else:
+                excel_columns = self.excel_data["columns"]
 
-            # Crear mapeador
-            mapper = TableMapper(self.db_connection)
+            sql_columns = [col["COLUMN_NAME"] for col in self.table_structure]
 
-            # Realizar mapeo
-            excel_columns = self.excel_data['columns']
-            sql_columns = [col['COLUMN_NAME'] for col in self.table_structure]
-
-            mappings = mapper.suggest_column_mappings(
+            mappings = self.table_mapper.suggest_column_mappings(
                 excel_columns,
                 sql_columns,
                 self.table_structure
@@ -793,28 +895,26 @@ class MainInterface:
                 ))
 
             # Actualizar información
-            mapped_count = sum(1 for m in mappings if m['confidence'] > 0.7)
+            mapped_count = sum(1 for m in mappings if m["confidence"] > 0)
+            high_confidence_count = sum(
+                1 for m in mappings if m["confidence"] >= self.table_mapper.high_confidence_threshold / 100.0)
+
             self.mapping_info_label.config(
-                text=f"{mapped_count}/{len(excel_columns)} columnas mapeadas automáticamente"
+                text=f"{high_confidence_count}/{len(excel_columns)} columnas mapeadas con alta confianza ({mapped_count} en total)"
             )
 
-            self.column_mappings = {m['excel_column']: m for m in mappings}
+            self.column_mappings = {
+                m["excel_column"]: m for m in mappings if m["sql_column"] is not None}
 
             # Habilitar botón de procesamiento si hay mapeos válidos
             if mapped_count > 0:
-                self.process_button.config(state='normal')
+                self.process_button.config(state="normal")
 
             if self.status_var:
                 self.status_var.set("Mapeo automático completado")
             self.logger.info(
                 f"Mapeo automático completado: {mapped_count}/{len(excel_columns)}")
 
-        except ImportError:
-            messagebox.showwarning(
-                "Módulo no disponible",
-                "El módulo de mapeo automático aún no está implementado.\n"
-                "Se implementará en el siguiente paso."
-            )
         except Exception as e:
             self.logger.error(f"Error en mapeo automático: {str(e)}")
             messagebox.showerror(
@@ -823,7 +923,9 @@ class MainInterface:
                 self.status_var.set("Error en mapeo automático")
 
     def _clear_mapping(self):
-        """Limpia el mapeo de columnas."""
+        """
+        Limpia el mapeo de columnas.
+        """
         try:
             # Limpiar treeview
             for item in self.mapping_tree.get_children():
@@ -834,7 +936,7 @@ class MainInterface:
             self.mapping_info_label.config(text="")
 
             # Deshabilitar botón de procesamiento
-            self.process_button.config(state='disabled')
+            self.process_button.config(state="disabled")
 
             if self.status_var:
                 self.status_var.set("Mapeo limpiado")
@@ -843,11 +945,13 @@ class MainInterface:
             self.logger.error(f"Error limpiando mapeo: {str(e)}")
 
     def _validate_data(self):
-        """Valida los datos antes del procesamiento."""
+        """
+        Valida los datos antes del procesamiento.
+        """
         try:
-            if not self.column_mappings:
+            if not self.excel_data or not self.column_mappings:
                 messagebox.showwarning(
-                    "Advertencia", "No hay mapeo de columnas definido")
+                    "Advertencia", "Seleccione un archivo Excel y realice el mapeo primero")
                 return
 
             if self.status_var:
@@ -855,13 +959,49 @@ class MainInterface:
             if self.root:
                 self.root.update()
 
-            # Aquí se implementará la validación completa
-            # Por ahora, mostrar mensaje informativo
-            messagebox.showinfo(
-                "Validación",
-                "La validación de datos se implementará en el siguiente paso.\n"
-                "Por ahora, puede proceder con el procesamiento."
-            )
+            # Obtener el DataFrame completo del Excel usando la hoja más similar
+            sheet_to_use = None
+            if self.excel_data and isinstance(self.excel_data, dict):
+                sheet_to_use = self.excel_data.get("best_sheet")
+                if not sheet_to_use and "sheet_names" in self.excel_data:
+                    sheet_to_use = self.excel_data["sheet_names"][0]
+            if self.selected_file and sheet_to_use:
+                df_full = pd.read_excel(
+                    self.selected_file, sheet_name=sheet_to_use)
+            else:
+                messagebox.showerror(
+                    "Error", "No se pudo determinar la hoja de Excel a usar.")
+                return
+
+            # Aplicar limpieza y mapeo inicial de columnas
+            df_cleaned = self.excel_processor._clean_dataframe(df_full)
+            df_mapped = self.excel_processor._apply_column_mappings(
+                df_cleaned, self.column_mappings)
+
+            # Realizar validación
+            validation_results = self.excel_processor._validate_dataframe(
+                df_mapped)
+
+            # Mostrar resultados de validación
+            if validation_results["is_valid"]:
+                messagebox.showinfo(
+                    "Validación Completada", "Todos los datos son válidos según las reglas definidas.")
+            else:
+                error_messages = [
+                    f"- {err}" for err in validation_results["errors"]]
+                warning_messages = [
+                    f"- {warn}" for warn in validation_results["warnings"]]
+
+                full_message = "Se encontraron problemas durante la validación:\n\n"
+                if error_messages:
+                    full_message += "Errores:\n" + \
+                        "\n".join(error_messages) + "\n\n"
+                if warning_messages:
+                    full_message += "Advertencias:\n" + \
+                        "\n".join(warning_messages)
+
+                messagebox.showwarning(
+                    "Validación con Problemas", full_message)
 
             if self.status_var:
                 self.status_var.set("Validación completada")
@@ -869,20 +1009,26 @@ class MainInterface:
         except Exception as e:
             self.logger.error(f"Error validando datos: {str(e)}")
             messagebox.showerror("Error", f"Error validando datos:\n{str(e)}")
+            if self.status_var:
+                self.status_var.set(f"Error validando datos: {str(e)}")
 
     def _process_file(self):
-        """Procesa el archivo Excel con los mapeos definidos."""
+        """
+        Procesa el archivo Excel con los mapeos definidos.
+        """
         try:
-            if not self.column_mappings:
+            if not self.excel_data or not self.column_mappings:
                 messagebox.showwarning(
-                    "Advertencia", "No hay mapeo de columnas definido")
+                    "Advertencia", "No hay archivo Excel o mapeo de columnas definido")
                 return
 
             # Confirmar procesamiento
+            archivo_nombre = Path(
+                self.selected_file).name if self.selected_file else "N/A"
             response = messagebox.askyesno(
                 "Confirmar Procesamiento",
                 f"¿Está seguro de procesar el archivo?\n\n"
-                f"Archivo: {Path(str(self.selected_file)).name}\n"
+                f"Archivo: {archivo_nombre}\n"
                 f"Tabla destino: {self.selected_schema}.{self.selected_table}\n"
                 f"Columnas mapeadas: {len(self.column_mappings)}"
             )
@@ -891,35 +1037,65 @@ class MainInterface:
                 return
 
             # Cambiar estado de botones
-            self.process_button.config(state='disabled')
-            self.cancel_button.config(state='normal')
+            self.process_button.config(state="disabled")
+            self.cancel_button.config(state="normal")
 
             if self.status_var:
                 self.status_var.set("Procesando archivo...")
             if self.progress_var:
                 self.progress_var.set(0)
-
-            # Aquí se implementará el procesamiento real
-            # Por ahora, simular progreso
             if self.root:
-                for i in range(101):
-                    if self.progress_var:
-                        self.progress_var.set(i)
-                    self.root.update()
+                self.root.update_idletasks()
+
+            # Ejecutar el procesamiento real
+            # Usar la hoja más similar al nombre de la tabla
+            sheet_to_use = None
+            if self.excel_data and isinstance(self.excel_data, dict):
+                sheet_to_use = self.excel_data.get("best_sheet")
+                if not sheet_to_use and "sheet_names" in self.excel_data:
+                    sheet_to_use = self.excel_data["sheet_names"][0]
+            if self.selected_file and sheet_to_use:
+                processing_result: ProcessingResult = self.excel_processor.process_excel_file(
+                    file_path=self.selected_file,
+                    sheet_name=sheet_to_use,
+                    column_mappings=self.column_mappings
+                )
+            else:
+                messagebox.showerror(
+                    "Error", "No se pudo determinar la hoja de Excel a usar para el procesamiento.")
+                self.process_button.config(state="normal")
+                self.cancel_button.config(state="disabled")
+                return
+
+            # Simular progreso para demostración (eliminar en producción)
+            for i in range(101):
+                if self.progress_var:
+                    self.progress_var.set(i)
+                if self.root:
+                    self.root.update_idletasks()
                     self.root.after(10, lambda: None)  # Simular trabajo
+                # time.sleep(0.01) # Descomentar para ver la barra de progreso más lento
 
             # Restaurar estado de botones
-            self.process_button.config(state='normal')
-            self.cancel_button.config(state='disabled')
+            self.process_button.config(state="normal")
+            self.cancel_button.config(state="disabled")
 
-            messagebox.showinfo(
-                "Procesamiento Completado",
-                "El procesamiento del archivo se implementará completamente en el siguiente paso.\n"
-                "La simulación ha sido exitosa."
-            )
-
-            if self.status_var:
-                self.status_var.set("Procesamiento completado")
+            if processing_result.success:
+                messagebox.showinfo(
+                    "Procesamiento Completado",
+                    f"El archivo ha sido procesado exitosamente.\n\n"
+                    f"Filas procesadas: {processing_result.processed_rows}\n"
+                    f"Filas omitidas: {processing_result.skipped_rows}\n"
+                    f"Tiempo: {processing_result.processing_time:.2f} segundos"
+                )
+                if self.status_var:
+                    self.status_var.set("Procesamiento completado")
+            else:
+                error_msg = "\n".join(processing_result.errors)
+                messagebox.showerror(
+                    "Error de Procesamiento", f"Ocurrió un error durante el procesamiento:\n\n{error_msg}")
+                if self.status_var:
+                    self.status_var.set("Error en procesamiento")
 
         except Exception as e:
             self.logger.error(f"Error procesando archivo: {str(e)}")
@@ -929,17 +1105,21 @@ class MainInterface:
                 self.status_var.set("Error en procesamiento")
 
             # Restaurar estado de botones
-            self.process_button.config(state='normal')
-            self.cancel_button.config(state='disabled')
+            self.process_button.config(state="normal")
+            self.cancel_button.config(state="disabled")
 
     def _cancel_processing(self):
-        """Cancela el procesamiento en curso."""
+        """
+        Cancela el procesamiento en curso.
+        """
         try:
             response = messagebox.askyesno(
                 "Cancelar", "¿Está seguro de cancelar el procesamiento?")
             if response:
-                self.process_button.config(state='normal')
-                self.cancel_button.config(state='disabled')
+                # Aquí se debería implementar la lógica para detener el procesamiento
+                # Por ahora, solo se restauran los botones
+                self.process_button.config(state="normal")
+                self.cancel_button.config(state="disabled")
                 if self.progress_var:
                     self.progress_var.set(0)
                 if self.status_var:
@@ -949,7 +1129,9 @@ class MainInterface:
             self.logger.error(f"Error cancelando procesamiento: {str(e)}")
 
     def _exit_application(self):
-        """Cierra la aplicación."""
+        """
+        Cierra la aplicación.
+        """
         try:
             response = messagebox.askyesno(
                 "Salir", "¿Está seguro de salir de la aplicación?")
@@ -961,13 +1143,13 @@ class MainInterface:
             self.logger.error(f"Error cerrando aplicación: {str(e)}")
 
     def show(self):
-        """Muestra la interfaz principal."""
+        """
+        Muestra la interfaz principal.
+        """
         try:
-            # Siempre creamos la interfaz cuando se llama a show()
-            # Esto garantiza que self.root esté inicializado correctamente
-            self.root = self.create_interface()
+            if not self.root:
+                self.create_interface()
 
-            # Ahora podemos iniciar el bucle principal
             self.root.mainloop()
 
         except Exception as e:
