@@ -17,7 +17,7 @@ import pandas as pd
 # Importaciones absolutas para evitar problemas de importación relativa
 try:
     from table_mapper import TableMapper
-    from enhanced_processor import EnhancedExcelProcessor, ProcessingResult
+    from excel_processor import ExcelProcessor, ProcessingResult
 except ImportError as e:
     logging.error(f"Error de importación en MainInterface: {e}")
     # Manejar el error de importación de forma más robusta si es necesario
@@ -57,7 +57,7 @@ class MainInterface:
 
         # Instancias de procesadores
         self.table_mapper = TableMapper(self.db_connection)
-        self.excel_processor = EnhancedExcelProcessor(self.db_connection)
+        self.excel_processor = ExcelProcessor(self.db_connection)
 
         # Widgets principales
         self.root = None
@@ -501,12 +501,12 @@ class MainInterface:
             if self.root:
                 self.root.update()
 
-            # Usar EnhancedExcelProcessor para la validación inicial del archivo
-            file_validation_result = self.excel_processor._validate_file(
+            # Usar ExcelProcessor para la validación inicial del archivo
+            file_validation_result = self.excel_processor.validate_file(
                 self.selected_file)
-            if not file_validation_result["is_valid"]:
-                messagebox.showerror("Error de Archivo", "\n".join(
-                    file_validation_result["errors"]))
+            if not file_validation_result[0]:
+                messagebox.showerror("Error de Archivo",
+                                     file_validation_result[1])
                 if self.status_var:
                     self.status_var.set("Error al cargar archivo Excel")
                 if self.file_var:
@@ -1060,6 +1060,8 @@ class MainInterface:
                     sheet_name=sheet_to_use,
                     column_mappings=self.column_mappings
                 )
+                self.logger.info(
+                    f"Resultado del procesamiento: {processing_result}")
             else:
                 messagebox.showerror(
                     "Error", "No se pudo determinar la hoja de Excel a usar para el procesamiento.")
@@ -1068,13 +1070,13 @@ class MainInterface:
                 return
 
             # Simular progreso para demostración (eliminar en producción)
-            for i in range(101):
-                if self.progress_var:
-                    self.progress_var.set(i)
-                if self.root:
-                    self.root.update_idletasks()
-                    self.root.after(10, lambda: None)  # Simular trabajo
-                # time.sleep(0.01) # Descomentar para ver la barra de progreso más lento
+            # for i in range(101):
+            #     if self.progress_var:
+            #         self.progress_var.set(i)
+            #     if self.root:
+            #         self.root.update_idletasks()
+            #         self.root.after(10, lambda: None)  # Simular trabajo
+            #     # time.sleep(0.01) # Descomentar para ver la barra de progreso más lento
 
             # Restaurar estado de botones
             self.process_button.config(state="normal")
@@ -1149,9 +1151,10 @@ class MainInterface:
         try:
             if not self.root:
                 self.create_interface()
-
+            if not self.root:
+                raise RuntimeError(
+                    "No se pudo crear la ventana principal de Tkinter.")
             self.root.mainloop()
-
         except Exception as e:
             self.logger.error(f"Error mostrando interfaz: {str(e)}")
             raise

@@ -1,25 +1,25 @@
 """
-Procesador de Archivos Excel
-Proporciona funcionalidad para leer, procesar y mapear archivos Excel a estructuras de base de datos.
+Procesador Unificado de Archivos Excel
+Incluye procesamiento avanzado, mapeo, validación y transformación de datos.
 
-Autor: FRANKLIN ANDRES CARDONA YARA
-Fecha: 2025-01-08
+Autor: Franklin Cardona / Manus AI
+Fecha: 2025-08-20
 """
 
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Any, Optional, Tuple, Union
 import logging
-import os
-from datetime import datetime, date
 import re
-from fuzzywuzzy import fuzz, process
+from typing import Dict, List, Any, Optional, Tuple, Union
+from pathlib import Path
+from datetime import datetime, date
+import warnings
 from dataclasses import dataclass
 from enum import Enum
 
 
+# --- Modelos de datos ---
 class DataType(Enum):
-    """Enumeración de tipos de datos soportados."""
     STRING = "NVARCHAR"
     INTEGER = "INT"
     DECIMAL = "DECIMAL"
@@ -31,7 +31,6 @@ class DataType(Enum):
 
 @dataclass
 class ColumnMapping:
-    """Representa el mapeo entre una columna de Excel y una columna de base de datos."""
     excel_column: str
     db_column: str
     excel_index: int
@@ -48,7 +47,6 @@ class ColumnMapping:
 
 @dataclass
 class WorksheetMapping:
-    """Representa el mapeo entre una hoja de Excel y una tabla de base de datos."""
     worksheet_name: str
     table_name: str
     schema_name: str = "Data"
@@ -66,7 +64,6 @@ class WorksheetMapping:
 
 @dataclass
 class ValidationResult:
-    """Resultado de validación de datos."""
     is_valid: bool
     errors: List[Dict[str, Any]] = None
     warnings: List[Dict[str, Any]] = None
@@ -80,105 +77,70 @@ class ValidationResult:
             self.warnings = []
 
 
+@dataclass
+class ProcessingResult:
+    success: bool
+    processed_rows: int
+    skipped_rows: int
+    errors: List[str]
+    warnings: List[str]
+    data: Optional[pd.DataFrame]
+    processing_time: float
+    validation_results: Dict[str, Any]
+
+
+# --- Procesador Unificado ---
 class ExcelProcessor:
-    """
-    Procesador principal para archivos Excel.
-    """
-
-    def __init__(self, fuzzy_threshold: float = 0.8):
-        """
-        Inicializa el procesador de Excel.
-
-        Args:
-            fuzzy_threshold: Umbral para coincidencia difusa (0.0 - 1.0)
-        """
+    def __init__(self, db_connection=None, fuzzy_threshold: float = 0.8):
+        self.db_connection = db_connection
         self.fuzzy_threshold = fuzzy_threshold
         self.logger = logging.getLogger(__name__)
+        self.max_file_size_mb = 1000
+        self.max_rows = 100000
+        self.chunk_size = 1000
         self.supported_extensions = ['.xlsx', '.xls', '.xlsm']
-
-        # Patrones para detección de tipos de datos
-        self.date_patterns = [
-            r'^\d{1,2}[/-]\d{1,2}[/-]\d{2,4}$',  # MM/DD/YYYY, DD/MM/YYYY
-            r'^\d{4}[/-]\d{1,2}[/-]\d{1,2}$',    # YYYY/MM/DD
-            r'^\d{1,2}-\w{3}-\d{2,4}$',          # DD-MMM-YYYY
-        ]
-
-        self.datetime_patterns = [
-            r'^\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\s+\d{1,2}:\d{2}(:\d{2})?(\s*(AM|PM))?$',
-        ]
-
-        self.number_patterns = [
-            r'^-?\d+$',                          # Enteros
-            r'^-?\d+\.\d+$',                     # Decimales
-            r'^-?\d{1,3}(,\d{3})*(\.\d+)?$',    # Números con comas
-        ]
-
-        self.boolean_values = {
-            'true', 'false', 'yes', 'no', 'y', 'n', '1', '0',
-            'verdadero', 'falso', 'sí', 'si', 'no'
+        self.validation_patterns = {
+            'email': re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'),
+            'phone': re.compile(r'^[\+]?[1-9][\d]{0,15}$'),
+            'numeric': re.compile(r'^-?\d*\.?\d+$'),
+            'date': re.compile(r'^\d{4}-\d{2}-\d{2}$|^\d{2}/\d{2}/\d{4}$|^\d{2}-\d{2}-\d{4}$'),
         }
+        self.type_inference_config = {
+            'date_formats': ['%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y', '%d-%m-%Y'],
+            'boolean_values': {
+                'true': ['true', '1', 'yes', 'si', 'verdadero', 'sí'],
+                'false': ['false', '0', 'no', 'falso'],
+            },
+            'null_values': ['', 'null', 'none', 'n/a', 'na', '#n/a', 'nan'],
+        }
+        self.boolean_values = set(
+            self.type_inference_config['boolean_values']['true'] + self.type_inference_config['boolean_values']['false'])
 
+    # --- Validación de archivo ---
     def validate_file(self, file_path: str) -> Tuple[bool, Optional[str]]:
-        """
-        Valida si el archivo Excel es válido y accesible.
-
-        Args:
-            file_path: Ruta al archivo Excel
-
-        Returns:
-            Tupla (es_válido, mensaje_error)
-        """
         try:
-            # Verificar existencia del archivo
-            if not os.path.exists(file_path):
+            if not Path(file_path).exists():
                 return False, "El archivo no existe"
-
-            # Verificar extensión
-            _, ext = os.path.splitext(file_path.lower())
+            ext = Path(file_path).suffix.lower()
             if ext not in self.supported_extensions:
                 return False, f"Extensión no soportada. Extensiones válidas: {', '.join(self.supported_extensions)}"
-
-            # Verificar tamaño del archivo
-            file_size = os.path.getsize(file_path)
-            max_size = 1000 * 1024 * 1024  # 1000MB
-            if file_size > max_size:
-                return False, f"El archivo es demasiado grande ({file_size / 1024 / 1024:.1f}MB). Máximo permitido: 1000MB"
-
-            # Intentar abrir el archivo
-            try:
-                pd.read_excel(file_path, sheet_name=None, nrows=1)
-            except Exception as e:
-                return False, f"Error leyendo archivo Excel: {str(e)}"
-
+            file_size_mb = Path(file_path).stat().st_size / (1024 * 1024)
+            if file_size_mb > self.max_file_size_mb:
+                return False, f"El archivo excede el tamaño máximo de {self.max_file_size_mb} MB"
             return True, None
-
         except Exception as e:
             return False, f"Error validando archivo: {str(e)}"
 
+    # --- Lectura de hojas y columnas ---
     def get_worksheet_info(self, file_path: str) -> Dict[str, Dict[str, Any]]:
-        """
-        Obtiene información básica de todas las hojas del archivo Excel.
-
-        Args:
-            file_path: Ruta al archivo Excel
-
-        Returns:
-            Diccionario con información de cada hoja
-        """
         try:
-            # Leer información de todas las hojas
             excel_file = pd.ExcelFile(file_path)
             worksheet_info = {}
-
             for sheet_name in excel_file.sheet_names:
                 try:
-                    # Leer solo las primeras filas para obtener información básica
                     df = pd.read_excel(
                         file_path, sheet_name=sheet_name, nrows=10)
-
-                    # Obtener información completa de la hoja
                     full_df = pd.read_excel(file_path, sheet_name=sheet_name)
-
                     worksheet_info[sheet_name] = {
                         'row_count': len(full_df),
                         'column_count': len(full_df.columns),
@@ -186,7 +148,6 @@ class ExcelProcessor:
                         'has_data': len(full_df) > 0,
                         'sample_data': df.head(5).to_dict('records') if len(df) > 0 else []
                     }
-
                 except Exception as e:
                     self.logger.warning(
                         f"Error leyendo hoja '{sheet_name}': {str(e)}")
@@ -198,37 +159,21 @@ class ExcelProcessor:
                         'has_data': False,
                         'sample_data': []
                     }
-
             return worksheet_info
-
         except Exception as e:
             self.logger.error(
                 f"Error obteniendo información de hojas: {str(e)}")
             raise
 
+    # --- Detección de tipos de columnas ---
     def detect_column_types(self, df: pd.DataFrame) -> Dict[str, DataType]:
-        """
-        Detecta automáticamente los tipos de datos de las columnas.
-
-        Args:
-            df: DataFrame de pandas
-
-        Returns:
-            Diccionario con tipos de datos detectados
-        """
         column_types = {}
-
         for column in df.columns:
-            series = df[column].dropna()  # Ignorar valores nulos
-
+            series = df[column].dropna()
             if len(series) == 0:
                 column_types[column] = DataType.STRING
                 continue
-
-            # Convertir a string para análisis de patrones
             string_series = series.astype(str)
-
-            # Contadores para cada tipo
             type_counts = {
                 DataType.INTEGER: 0,
                 DataType.DECIMAL: 0,
@@ -237,477 +182,452 @@ class ExcelProcessor:
                 DataType.BOOLEAN: 0,
                 DataType.STRING: 0
             }
-
             for value in string_series:
                 value = value.strip()
-
-                # Verificar booleano
                 if value.lower() in self.boolean_values:
                     type_counts[DataType.BOOLEAN] += 1
                     continue
-
-                # Verificar fecha/hora
-                is_datetime = any(re.match(pattern, value, re.IGNORECASE)
-                                  for pattern in self.datetime_patterns)
-                if is_datetime:
-                    type_counts[DataType.DATETIME] += 1
-                    continue
-
-                # Verificar fecha
-                is_date = any(re.match(pattern, value, re.IGNORECASE)
-                              for pattern in self.date_patterns)
-                if is_date:
+                if re.match(r'^\d{1,2}[/-]\d{1,2}[/-]\d{2,4}$', value) or re.match(r'^\d{4}[/-]\d{1,2}[/-]\d{1,2}$', value):
                     type_counts[DataType.DATE] += 1
                     continue
-
-                # Verificar número
-                is_integer = re.match(
-                    self.number_patterns[0], value.replace(',', ''))
-                if is_integer:
+                if re.match(r'^\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\s+\d{1,2}:\d{2}(:\d{2})?(\s*(AM|PM))?$', value):
+                    type_counts[DataType.DATETIME] += 1
+                    continue
+                if re.match(r'^-?\d+$', value.replace(',', '')):
                     type_counts[DataType.INTEGER] += 1
                     continue
-
-                is_decimal = re.match(self.number_patterns[1], value.replace(',', '')) or \
-                    re.match(self.number_patterns[2], value)
-                if is_decimal:
+                if re.match(r'^-?\d+\.\d+$', value.replace(',', '')) or re.match(r'^-?\d{1,3}(,\d{3})*(\.\d+)?$', value):
                     type_counts[DataType.DECIMAL] += 1
                     continue
-
-                # Por defecto, string
                 type_counts[DataType.STRING] += 1
-
-            # Determinar tipo predominante
             total_values = sum(type_counts.values())
             if total_values == 0:
                 column_types[column] = DataType.STRING
             else:
-                # Calcular porcentajes
-                percentages = {dtype: count / total_values
-                               for dtype, count in type_counts.items()}
-
-                # Seleccionar tipo con mayor porcentaje (mínimo 60%)
-                max_type = max(percentages, key=percentages.get)
+                percentages = {
+                    dtype: count / total_values for dtype, count in type_counts.items()}
+                max_type = max(percentages, key=lambda k: percentages[k])
                 if percentages[max_type] >= 0.6:
                     column_types[column] = max_type
                 else:
                     column_types[column] = DataType.STRING
-
         return column_types
 
-    def fuzzy_match_columns(self, excel_columns: List[str],
-                            db_columns: List[str]) -> List[ColumnMapping]:
-        """
-        Realiza coincidencia difusa entre columnas de Excel y base de datos.
-
-        Args:
-            excel_columns: Lista de nombres de columnas de Excel
-            db_columns: Lista de nombres de columnas de base de datos
-
-        Returns:
-            Lista de mapeos de columnas
-        """
+    # --- Coincidencia difusa de columnas ---
+    def fuzzy_match_columns(self, excel_columns: List[str], db_columns: List[str]) -> List[ColumnMapping]:
         mappings = []
         used_db_columns = set()
-
         for i, excel_col in enumerate(excel_columns):
             best_match = None
             best_score = 0
-
-            # Buscar la mejor coincidencia
             for db_col in db_columns:
                 if db_col in used_db_columns:
                     continue
-
-                # Calcular diferentes tipos de similitud
-                ratio_score = fuzz.ratio(excel_col.lower(), db_col.lower())
-                partial_score = fuzz.partial_ratio(
-                    excel_col.lower(), db_col.lower())
-                token_sort_score = fuzz.token_sort_ratio(
-                    excel_col.lower(), db_col.lower())
-                token_set_score = fuzz.token_set_ratio(
-                    excel_col.lower(), db_col.lower())
-
-                # Promedio ponderado de los scores
-                combined_score = (ratio_score * 0.4 +
-                                  partial_score * 0.2 +
-                                  token_sort_score * 0.2 +
-                                  token_set_score * 0.2)
-
-                if combined_score > best_score:
-                    best_score = combined_score
+                ratio_score = self._fuzzy_ratio(excel_col, db_col)
+                if ratio_score > best_score:
+                    best_score = ratio_score
                     best_match = db_col
-
-            # Crear mapeo si supera el umbral
             if best_match and best_score >= (self.fuzzy_threshold * 100):
                 mapping = ColumnMapping(
                     excel_column=excel_col,
                     db_column=best_match,
                     excel_index=i,
-                    data_type=DataType.UNKNOWN,  # Se determinará después
+                    data_type=DataType.UNKNOWN,
                     confidence_score=best_score / 100
                 )
                 mappings.append(mapping)
                 used_db_columns.add(best_match)
             else:
-                # Crear mapeo con baja confianza
                 mapping = ColumnMapping(
                     excel_column=excel_col,
-                    db_column=excel_col,  # Usar nombre original
+                    db_column=excel_col,
                     excel_index=i,
                     data_type=DataType.UNKNOWN,
                     confidence_score=0.0
                 )
                 mapping.validation_errors.append(
-                    f"No se encontró coincidencia para la columna '{excel_col}'"
-                )
+                    f"No se encontró coincidencia para la columna '{excel_col}'")
                 mappings.append(mapping)
-
         return mappings
 
-    def map_worksheet_to_table(self, file_path: str, worksheet_name: str,
-                               available_tables: Dict[str, List[str]]) -> WorksheetMapping:
-        """
-        Mapea una hoja de Excel a una tabla de base de datos.
+    def _fuzzy_ratio(self, a: str, b: str) -> float:
+        a, b = a.lower(), b.lower()
+        return (self._simple_ratio(a, b) + self._partial_ratio(a, b)) / 2
 
-        Args:
-            file_path: Ruta al archivo Excel
-            worksheet_name: Nombre de la hoja
-            available_tables: Diccionario {tabla: [columnas]}
+    def _simple_ratio(self, a, b):
+        return 100 * (1 - (levenshtein(a, b) / max(len(a), len(b), 1)))
 
-        Returns:
-            Mapeo de la hoja de trabajo
-        """
+    def _partial_ratio(self, a, b):
+        if a in b or b in a:
+            return 100
+        return self._simple_ratio(a, b)
+
+    # --- Procesamiento principal ---
+    def process_excel_file(self, file_path: str, sheet_name: Optional[str] = None, column_mappings: Optional[Dict[str, Dict[str, Any]]] = None, validation_rules: Optional[Dict[str, Any]] = None) -> ProcessingResult:
+        start_time = datetime.now()
         try:
-            # Leer la hoja de Excel
-            df = pd.read_excel(file_path, sheet_name=worksheet_name)
-
-            if df.empty:
-                raise ValueError(f"La hoja '{worksheet_name}' está vacía")
-
-            # Detectar tipos de columnas
-            column_types = self.detect_column_types(df)
-
-            # Encontrar la mejor tabla coincidente
-            best_table = None
-            best_score = 0
-
-            for table_name, table_columns in available_tables.items():
-                # Calcular similitud entre nombre de hoja y tabla
-                name_score = fuzz.ratio(
-                    worksheet_name.lower(), table_name.lower())
-
-                # Calcular similitud de columnas
-                excel_columns = list(df.columns)
-                column_mappings = self.fuzzy_match_columns(
-                    excel_columns, table_columns)
-
-                # Calcular score promedio de mapeo de columnas
-                if column_mappings:
-                    avg_column_score = sum(
-                        m.confidence_score for m in column_mappings) / len(column_mappings)
-                    combined_score = (name_score * 0.3 +
-                                      avg_column_score * 100 * 0.7)
-                else:
-                    combined_score = name_score * 0.3
-
-                if combined_score > best_score:
-                    best_score = combined_score
-                    best_table = table_name
-
-            # Crear mapeo de hoja de trabajo
-            if best_table:
-                table_columns = available_tables[best_table]
-                column_mappings = self.fuzzy_match_columns(
-                    list(df.columns), table_columns)
-
-                # Asignar tipos de datos detectados
-                for mapping in column_mappings:
-                    if mapping.excel_column in column_types:
-                        mapping.data_type = column_types[mapping.excel_column]
-
-                worksheet_mapping = WorksheetMapping(
-                    worksheet_name=worksheet_name,
-                    table_name=best_table,
-                    column_mappings=column_mappings,
-                    confidence_score=best_score / 100,
-                    row_count=len(df),
-                    has_headers=True,
-                    header_row=0,
-                    data_start_row=1
-                )
-            else:
-                # No se encontró tabla coincidente
-                worksheet_mapping = WorksheetMapping(
-                    worksheet_name=worksheet_name,
-                    table_name=worksheet_name,  # Usar nombre de hoja como tabla
-                    column_mappings=[],
-                    confidence_score=0.0,
-                    row_count=len(df)
-                )
-
-            return worksheet_mapping
-
-        except Exception as e:
-            self.logger.error(
-                f"Error mapeando hoja '{worksheet_name}': {str(e)}")
-            raise
-
-    def validate_data(self, file_path: str, worksheet_mapping: WorksheetMapping) -> ValidationResult:
-        """
-        Valida los datos de una hoja de Excel según el mapeo definido.
-
-        Args:
-            file_path: Ruta al archivo Excel
-            worksheet_mapping: Mapeo de la hoja de trabajo
-
-        Returns:
-            Resultado de validación
-        """
-        try:
-            # Leer datos de la hoja
-            df = pd.read_excel(
-                file_path, sheet_name=worksheet_mapping.worksheet_name)
-
-            result = ValidationResult(
-                is_valid=True,
-                processed_rows=len(df),
-                valid_rows=0
-            )
-
-            # Validar cada fila
-            for row_idx, row in df.iterrows():
-                row_valid = True
-
-                for mapping in worksheet_mapping.column_mappings:
-                    if mapping.excel_column not in df.columns:
-                        continue
-
-                    value = row[mapping.excel_column]
-
-                    # Saltar valores nulos si la columna es nullable
-                    if pd.isna(value) and mapping.is_nullable:
-                        continue
-
-                    # Validar según tipo de datos
-                    validation_error = self._validate_cell_value(
-                        value, mapping.data_type, mapping.max_length
-                    )
-
-                    if validation_error:
-                        row_valid = False
-                        result.errors.append({
-                            'row': row_idx + 2,  # +2 porque Excel empieza en 1 y hay header
-                            'column': mapping.excel_column,
-                            'value': str(value),
-                            'error': validation_error,
-                            'expected_type': mapping.data_type.value
-                        })
-
-                if row_valid:
-                    result.valid_rows += 1
-
-            # Determinar si la validación general es exitosa
-            if result.errors:
-                result.is_valid = False
-
-                # Si hay demasiados errores, marcar como crítico
-                error_rate = len(result.errors) / result.processed_rows
-                if error_rate > 0.1:  # Más del 10% de errores
-                    result.warnings.append({
-                        'type': 'HIGH_ERROR_RATE',
-                        'message': f'Alta tasa de errores: {error_rate:.1%}',
-                        'suggestion': 'Revisar el mapeo de columnas y formato de datos'
-                    })
-
-            return result
-
-        except Exception as e:
-            self.logger.error(f"Error validando datos: {str(e)}")
-            return ValidationResult(
-                is_valid=False,
-                errors=[{
-                    'row': 0,
-                    'column': 'GENERAL',
-                    'value': '',
-                    'error': f'Error de validación: {str(e)}',
-                    'expected_type': 'N/A'
-                }]
-            )
-
-    def _validate_cell_value(self, value: Any, expected_type: DataType,
-                             max_length: Optional[int] = None) -> Optional[str]:
-        """
-        Valida un valor de celda individual.
-
-        Args:
-            value: Valor a validar
-            expected_type: Tipo de datos esperado
-            max_length: Longitud máxima (para strings)
-
-        Returns:
-            Mensaje de error o None si es válido
-        """
-        if pd.isna(value):
-            return None  # Los nulos se manejan por separado
-
-        try:
-            if expected_type == DataType.INTEGER:
-                if isinstance(value, (int, np.integer)):
-                    return None
-                if isinstance(value, (float, np.floating)) and value.is_integer():
-                    return None
-                try:
-                    int(str(value).replace(',', ''))
-                    return None
-                except ValueError:
-                    return f"No es un número entero válido"
-
-            elif expected_type == DataType.DECIMAL:
-                if isinstance(value, (int, float, np.number)):
-                    return None
-                try:
-                    float(str(value).replace(',', ''))
-                    return None
-                except ValueError:
-                    return f"No es un número decimal válido"
-
-            elif expected_type == DataType.BOOLEAN:
-                if isinstance(value, bool):
-                    return None
-                if str(value).lower().strip() in self.boolean_values:
-                    return None
-                return f"No es un valor booleano válido"
-
-            elif expected_type in [DataType.DATE, DataType.DATETIME]:
-                if isinstance(value, (datetime, date)):
-                    return None
-                try:
-                    pd.to_datetime(value)
-                    return None
-                except:
-                    return f"No es una fecha/hora válida"
-
-            elif expected_type == DataType.STRING:
-                str_value = str(value)
-                if max_length and len(str_value) > max_length:
-                    return f"Excede la longitud máxima de {max_length} caracteres"
-                return None
-
-            return None
-
-        except Exception as e:
-            return f"Error de validación: {str(e)}"
-
-    def convert_dataframe_types(self, df: pd.DataFrame,
-                                column_mappings: List[ColumnMapping]) -> pd.DataFrame:
-        """
-        Convierte los tipos de datos del DataFrame según los mapeos definidos.
-
-        Args:
-            df: DataFrame original
-            column_mappings: Lista de mapeos de columnas
-
-        Returns:
-            DataFrame con tipos convertidos
-        """
-        df_converted = df.copy()
-
-        for mapping in column_mappings:
-            if mapping.excel_column not in df_converted.columns:
-                continue
-
-            try:
-                if mapping.data_type == DataType.INTEGER:
-                    # Convertir a entero, manejando valores nulos
-                    df_converted[mapping.excel_column] = pd.to_numeric(
-                        df_converted[mapping.excel_column], errors='coerce'
-                    ).astype('Int64')  # Nullable integer
-
-                elif mapping.data_type == DataType.DECIMAL:
-                    df_converted[mapping.excel_column] = pd.to_numeric(
-                        df_converted[mapping.excel_column], errors='coerce'
-                    )
-
-                elif mapping.data_type == DataType.BOOLEAN:
-                    # Convertir valores booleanos
-                    def convert_bool(x):
-                        if pd.isna(x):
-                            return None
-                        str_val = str(x).lower().strip()
-                        if str_val in ['true', 'yes', 'y', '1', 'verdadero', 'sí', 'si']:
-                            return True
-                        elif str_val in ['false', 'no', 'n', '0', 'falso']:
-                            return False
-                        return None
-
-                    df_converted[mapping.excel_column] = df_converted[mapping.excel_column].apply(
-                        convert_bool)
-
-                elif mapping.data_type in [DataType.DATE, DataType.DATETIME]:
-                    df_converted[mapping.excel_column] = pd.to_datetime(
-                        df_converted[mapping.excel_column], errors='coerce'
-                    )
-
-                elif mapping.data_type == DataType.STRING:
-                    df_converted[mapping.excel_column] = df_converted[mapping.excel_column].astype(
-                        str)
-                    # Reemplazar 'nan' string con None
-                    df_converted[mapping.excel_column] = df_converted[mapping.excel_column].replace(
-                        'nan', None)
-
-            except Exception as e:
-                self.logger.warning(
-                    f"Error convirtiendo columna '{mapping.excel_column}': {str(e)}")
-
-        return df_converted
-
-    def process_excel_file(self, file_path: str,
-                           available_tables: Dict[str, List[str]]) -> Dict[str, WorksheetMapping]:
-        """
-        Procesa un archivo Excel completo y genera mapeos para todas las hojas.
-
-        Args:
-            file_path: Ruta al archivo Excel
-            available_tables: Diccionario {tabla: [columnas]}
-
-        Returns:
-            Diccionario con mapeos de todas las hojas
-        """
-        try:
-            # Validar archivo
+            self.logger.info(
+                f"Iniciando procesamiento de archivo: {file_path}")
             is_valid, error_msg = self.validate_file(file_path)
             if not is_valid:
-                raise ValueError(error_msg)
-
-            # Obtener información de hojas
-            worksheet_info = self.get_worksheet_info(file_path)
-
-            # Procesar cada hoja
-            worksheet_mappings = {}
-
-            for worksheet_name, info in worksheet_info.items():
-                if not info.get('has_data', False):
-                    self.logger.warning(
-                        f"Saltando hoja '{worksheet_name}' - sin datos")
-                    continue
-
-                try:
-                    mapping = self.map_worksheet_to_table(
-                        file_path, worksheet_name, available_tables
-                    )
-                    worksheet_mappings[worksheet_name] = mapping
-
-                    self.logger.info(
-                        f"Hoja '{worksheet_name}' mapeada a tabla '{mapping.table_name}' "
-                        f"con confianza {mapping.confidence_score:.2%}"
-                    )
-
-                except Exception as e:
-                    self.logger.error(
-                        f"Error procesando hoja '{worksheet_name}': {str(e)}")
-
-            return worksheet_mappings
-
+                return ProcessingResult(False, 0, 0, [error_msg if error_msg else "Error desconocido"], [], None, 0, {})
+            df = self._read_excel_file(file_path, sheet_name)
+            if df is None:
+                return ProcessingResult(False, 0, 0, ["No se pudo leer el archivo Excel"], [], None, 0, {})
+            original_rows = len(df)
+            self.logger.info(
+                f"Archivo leído: {original_rows} filas, {len(df.columns)} columnas")
+            df_cleaned = self._clean_dataframe(df)
+            if column_mappings:
+                df_mapped = self._apply_column_mappings(
+                    df_cleaned, column_mappings)
+            else:
+                df_mapped = df_cleaned
+            validation_results = self._validate_dataframe(
+                df_mapped, validation_rules)
+            df_transformed = self._transform_data_types(
+                df_mapped, column_mappings)
+            df_valid = self._filter_valid_rows(
+                df_transformed, validation_results)
+            processed_rows = len(df_valid)
+            skipped_rows = original_rows - processed_rows
+            processing_time = (datetime.now() - start_time).total_seconds()
+            self.logger.info(
+                f"Procesamiento completado: {processed_rows} filas procesadas, {skipped_rows} filas omitidas")
+            return ProcessingResult(True, processed_rows, skipped_rows, [], validation_results.get("warnings", []), df_valid, processing_time, validation_results)
         except Exception as e:
-            self.logger.error(f"Error procesando archivo Excel: {str(e)}")
-            raise
+            processing_time = (datetime.now() - start_time).total_seconds()
+            error_msg = f"Error procesando archivo Excel: {str(e)}"
+            self.logger.error(error_msg)
+            return ProcessingResult(False, 0, 0, [error_msg], [], None, processing_time, {})
+
+    def _read_excel_file(self, file_path: str, sheet_name: Optional[str] = None) -> Optional[pd.DataFrame]:
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                if sheet_name:
+                    df = pd.read_excel(file_path, sheet_name=sheet_name)
+                else:
+                    df = pd.read_excel(file_path)
+                if len(df) > self.max_rows:
+                    self.logger.warning(
+                        f"El archivo tiene {len(df)} filas, se procesarán solo las primeras {self.max_rows}")
+                    df = df.head(self.max_rows)
+                return df
+        except Exception as e:
+            self.logger.error(f"Error leyendo archivo Excel: {str(e)}")
+            return None
+
+    def _clean_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
+        try:
+            df_clean = df.copy()
+            df_clean = df_clean.dropna(axis=1, how="all")
+            df_clean = df_clean.dropna(axis=0, how="all")
+            df_clean.columns = [self._clean_column_name(
+                col) for col in df_clean.columns]
+            df_clean = df_clean.reset_index(drop=True)
+            self.logger.info(
+                f"DataFrame limpio: {len(df_clean)} filas, {len(df_clean.columns)} columnas")
+            return df_clean
+        except Exception as e:
+            self.logger.error(f"Error limpiando DataFrame: {str(e)}")
+            return df
+
+    def _clean_column_name(self, column_name: str) -> str:
+        try:
+            clean_name = str(column_name).strip()
+            clean_name = re.sub(r'[^\w\s-]', '', clean_name)
+            clean_name = re.sub(r'\s+', ' ', clean_name)
+            if not clean_name:
+                clean_name = f"Column_{hash(column_name) % 1000}"
+            return clean_name
+        except Exception as e:
+            self.logger.warning(
+                f"Error limpiando nombre de columna {column_name}: {str(e)}")
+            return str(column_name)
+
+    def _apply_column_mappings(self, df: pd.DataFrame, column_mappings: Dict[str, Dict[str, Any]]) -> pd.DataFrame:
+        try:
+            df_mapped = df.copy()
+            rename_dict = {}
+            for excel_col, mapping_info in column_mappings.items():
+                if mapping_info.get("sql_column") and mapping_info.get("confidence", 0) > 0.5:
+                    if excel_col in df_mapped.columns:
+                        rename_dict[excel_col] = mapping_info["sql_column"]
+            if rename_dict:
+                df_mapped = df_mapped.rename(columns=rename_dict)
+                self.logger.info(f"Columnas renombradas: {len(rename_dict)}")
+            return df_mapped
+        except Exception as e:
+            self.logger.error(f"Error aplicando mapeos de columnas: {str(e)}")
+            return df
+
+    def _validate_dataframe(self, df: pd.DataFrame, validation_rules: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        try:
+            validation_results = {
+                "is_valid": True,
+                "errors": [],
+                "warnings": [],
+                "column_validations": {},
+                "row_validations": [],
+            }
+            for column in df.columns:
+                column_validation = self._validate_column(
+                    df[column], column, validation_rules)
+                validation_results["column_validations"][column] = column_validation
+                if not column_validation["is_valid"]:
+                    validation_results["is_valid"] = False
+                    validation_results["errors"].extend(
+                        column_validation["errors"])
+                validation_results["warnings"].extend(
+                    column_validation["warnings"])
+            duplicates = df.duplicated()
+            if duplicates.any():
+                duplicate_count = duplicates.sum()
+                validation_results["warnings"].append(
+                    f"Se encontraron {duplicate_count} filas duplicadas")
+            return validation_results
+        except Exception as e:
+            self.logger.error(f"Error validando DataFrame: {str(e)}")
+            return {
+                "is_valid": False,
+                "errors": [f"Error en validación: {str(e)}"],
+                "warnings": [],
+                "column_validations": {},
+                "row_validations": [],
+            }
+
+    def _validate_column(self, series: pd.Series, column_name: str, validation_rules: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        try:
+            validation_result = {
+                "is_valid": True,
+                "errors": [],
+                "warnings": [],
+                "null_count": series.isnull().sum(),
+                "unique_count": series.nunique(),
+                "data_type": str(series.dtype),
+            }
+            null_percentage = (
+                validation_result["null_count"] / len(series)) * 100
+            if null_percentage > 50:
+                validation_result["warnings"].append(
+                    f"Columna '{column_name}' tiene {null_percentage:.1f}% de valores nulos")
+            elif null_percentage > 80:
+                validation_result["is_valid"] = False
+                validation_result["errors"].append(
+                    f"Columna '{column_name}' tiene demasiados valores nulos ({null_percentage:.1f}%)")
+            inferred_type = self._infer_column_type(series)
+            validation_result["inferred_type"] = inferred_type
+            if inferred_type == "email":
+                email_validation = self._validate_email_column(series)
+                validation_result.update(email_validation)
+            elif inferred_type == "phone":
+                phone_validation = self._validate_phone_column(series)
+                validation_result.update(phone_validation)
+            elif inferred_type == "numeric":
+                numeric_validation = self._validate_numeric_column(series)
+                validation_result.update(numeric_validation)
+            elif inferred_type == "date":
+                date_validation = self._validate_date_column(series)
+                validation_result.update(date_validation)
+            if validation_rules and column_name in validation_rules:
+                custom_validation = self._apply_custom_validation(
+                    series, validation_rules[column_name])
+                validation_result.update(custom_validation)
+            return validation_result
+        except Exception as e:
+            return {
+                "is_valid": False,
+                "errors": [f"Error validando columna {column_name}: {str(e)}"],
+                "warnings": [],
+                "null_count": 0,
+                "unique_count": 0,
+                "data_type": "unknown",
+                "inferred_type": "unknown",
+            }
+
+    def _infer_column_type(self, series: pd.Series) -> str:
+        try:
+            non_null_sample = series.dropna().astype(str).head(100)
+            if len(non_null_sample) == 0:
+                return "unknown"
+            type_counts = {"email": 0, "phone": 0,
+                           "numeric": 0, "date": 0, "boolean": 0}
+            for value in non_null_sample:
+                value_str = str(value).strip().lower()
+                if self.validation_patterns["email"].match(value_str):
+                    type_counts["email"] += 1
+                elif self.validation_patterns["phone"].match(value_str):
+                    type_counts["phone"] += 1
+                elif self.validation_patterns["numeric"].match(value_str):
+                    type_counts["numeric"] += 1
+                elif self.validation_patterns["date"].match(value_str):
+                    type_counts["date"] += 1
+                elif value_str in self.type_inference_config["boolean_values"]["true"] + self.type_inference_config["boolean_values"]["false"]:
+                    type_counts["boolean"] += 1
+            total_sample = len(non_null_sample)
+            for data_type, count in type_counts.items():
+                if count / total_sample >= 0.7:
+                    return data_type
+            return "string"
+        except Exception as e:
+            self.logger.warning(f"Error infiriendo tipo de columna: {str(e)}")
+            return "string"
+
+    def _validate_email_column(self, series: pd.Series) -> Dict[str, Any]:
+        try:
+            result = {"email_validation": {"valid_emails": 0,
+                                           "invalid_emails": 0}, "warnings": []}
+            for value in series.dropna():
+                if self.validation_patterns["email"].match(str(value).strip()):
+                    result["email_validation"]["valid_emails"] += 1
+                else:
+                    result["email_validation"]["invalid_emails"] += 1
+            invalid_rate = result["email_validation"]["invalid_emails"] / \
+                max(len(series.dropna()), 1)
+            if invalid_rate > 0.1:
+                result["warnings"].append(
+                    f"La columna tiene {invalid_rate:.1%} de emails inválidos")
+            return result
+        except Exception as e:
+            return {"email_validation": {"error": str(e)}}
+
+    def _validate_phone_column(self, series: pd.Series) -> Dict[str, Any]:
+        try:
+            result = {"phone_validation": {
+                "valid_phones": 0, "invalid_phones": 0}}
+            for value in series.dropna():
+                clean_phone = re.sub(r'[^\d+]', '', str(value))
+                if self.validation_patterns["phone"].match(clean_phone):
+                    result["phone_validation"]["valid_phones"] += 1
+                else:
+                    result["phone_validation"]["invalid_phones"] += 1
+            return result
+        except Exception as e:
+            return {"phone_validation": {"error": str(e)}}
+
+    def _validate_numeric_column(self, series: pd.Series) -> Dict[str, Any]:
+        try:
+            result = {"numeric_validation": {}, "warnings": []}
+            numeric_series = pd.to_numeric(series, errors="coerce")
+            result["numeric_validation"]["min_value"] = float(
+                numeric_series.min())
+            result["numeric_validation"]["max_value"] = float(
+                numeric_series.max())
+            result["numeric_validation"]["mean_value"] = float(
+                numeric_series.mean())
+            result["numeric_validation"]["std_value"] = float(
+                numeric_series.std())
+            q1 = numeric_series.quantile(0.25)
+            q3 = numeric_series.quantile(0.75)
+            iqr = q3 - q1
+            outliers = numeric_series[(
+                numeric_series < q1 - 1.5 * iqr) | (numeric_series > q3 + 1.5 * iqr)]
+            if len(outliers) > 0:
+                result["warnings"].append(
+                    f"Se detectaron {len(outliers)} valores atípicos")
+            return result
+        except Exception as e:
+            return {"numeric_validation": {"error": str(e)}}
+
+    def _validate_date_column(self, series: pd.Series) -> Dict[str, Any]:
+        try:
+            result = {"date_validation": {"valid_dates": 0,
+                                          "invalid_dates": 0}, "warnings": []}
+            for value in series.dropna():
+                try:
+                    pd.to_datetime(str(value))
+                    result["date_validation"]["valid_dates"] += 1
+                except:
+                    result["date_validation"]["invalid_dates"] += 1
+            return result
+        except Exception as e:
+            return {"date_validation": {"error": str(e)}}
+
+    def _apply_custom_validation(self, series: pd.Series, rules: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            result = {"custom_validation": {}}
+            return result
+        except Exception as e:
+            return {"custom_validation": {"error": str(e)}}
+
+    def _transform_data_types(self, df: pd.DataFrame, column_mappings: Optional[Dict[str, Dict[str, Any]]] = None) -> pd.DataFrame:
+        try:
+            df_transformed = df.copy()
+            for column in df_transformed.columns:
+                try:
+                    target_type = None
+                    if column_mappings:
+                        for excel_col, mapping_info in column_mappings.items():
+                            if mapping_info.get("sql_column") == column:
+                                target_type = mapping_info.get("data_type")
+                                break
+                    if target_type == "int" or target_type == "integer":
+                        df_transformed[column] = pd.to_numeric(
+                            df_transformed[column], errors="coerce").astype("Int64")
+                    elif target_type == "float":
+                        df_transformed[column] = pd.to_numeric(
+                            df_transformed[column], errors="coerce")
+                    elif target_type == "datetime":
+                        df_transformed[column] = pd.to_datetime(
+                            df_transformed[column], errors="coerce")
+                    elif target_type == "boolean":
+                        df_transformed[column] = self._convert_to_boolean(
+                            df_transformed[column])
+                    else:
+                        df_transformed[column] = df_transformed[column].astype(
+                            str).str.strip()
+                        df_transformed[column] = df_transformed[column].replace(
+                            "nan", np.nan)
+                except Exception as col_error:
+                    self.logger.warning(
+                        f"Error transformando columna {column}: {str(col_error)}")
+            return df_transformed
+        except Exception as e:
+            self.logger.error(f"Error transformando tipos de datos: {str(e)}")
+            return df
+
+    def _convert_to_boolean(self, series: pd.Series) -> pd.Series:
+        try:
+            def convert_value(value):
+                if pd.isna(value):
+                    return None
+                str_value = str(value).lower().strip()
+                if str_value in self.type_inference_config["boolean_values"]["true"]:
+                    return True
+                elif str_value in self.type_inference_config["boolean_values"]["false"]:
+                    return False
+                else:
+                    return None
+            return series.apply(convert_value)
+        except Exception as e:
+            self.logger.warning(f"Error convirtiendo a booleano: {str(e)}")
+            return series
+
+    def _filter_valid_rows(self, df: pd.DataFrame, validation_results: Dict[str, Any]) -> pd.DataFrame:
+        try:
+            df_valid = df.dropna(how="all")
+            return df_valid
+        except Exception as e:
+            self.logger.error(f"Error filtrando filas válidas: {str(e)}")
+            return df
+
+# --- Utilidad para coincidencia difusa ---
+
+
+def levenshtein(a, b):
+    if a == b:
+        return 0
+    if len(a) == 0:
+        return len(b)
+    if len(b) == 0:
+        return len(a)
+    v0 = [i for i in range(len(b) + 1)]
+    v1 = [0] * (len(b) + 1)
+    for i in range(len(a)):
+        v1[0] = i + 1
+        for j in range(len(b)):
+            cost = 0 if a[i] == b[j] else 1
+            v1[j + 1] = min(v1[j] + 1, v0[j + 1] + 1, v0[j] + cost)
+        v0, v1 = v1, v0
+    return v0[len(b)]

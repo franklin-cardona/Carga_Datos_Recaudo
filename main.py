@@ -294,8 +294,6 @@ class ExcelSQLIntegrationApp:
         """Inicia la interfaz principal de la aplicación."""
         try:
             from main_interface import MainInterface
-            self.logger.info(
-                f"Iniciando interfaz principal {self.db_connection}")
             # Crear interfaz principal
             main_interface = MainInterface(
                 db_connection=self.db_connection,
