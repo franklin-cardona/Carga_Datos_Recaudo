@@ -13,6 +13,7 @@ import os
 import logging
 from pathlib import Path
 import pandas as pd
+import numpy as np
 
 # Importaciones absolutas para evitar problemas de importación relativa
 try:
@@ -57,7 +58,8 @@ class MainInterface:
 
         # Instancias de procesadores
         self.table_mapper = TableMapper(self.db_connection)
-        self.excel_processor = ExcelProcessor(self.db_connection)
+        from enhanced_excel_processor import EnhancedExcelProcessor
+        self.excel_processor = EnhancedExcelProcessor(self.db_connection)
 
         # Widgets principales
         self.root = None
@@ -480,6 +482,8 @@ class MainInterface:
 
             if filename:
                 self.selected_file = filename
+                if self.file_var is None:
+                    self.file_var = tk.StringVar()
                 self.file_var.set(filename)
                 self._load_excel_file()
 
@@ -1048,17 +1052,20 @@ class MainInterface:
                 self.root.update_idletasks()
 
             # Ejecutar el procesamiento real
-            # Usar la hoja más similar al nombre de la tabla
             sheet_to_use = None
             if self.excel_data and isinstance(self.excel_data, dict):
                 sheet_to_use = self.excel_data.get("best_sheet")
                 if not sheet_to_use and "sheet_names" in self.excel_data:
                     sheet_to_use = self.excel_data["sheet_names"][0]
             if self.selected_file and sheet_to_use:
-                processing_result: ProcessingResult = self.excel_processor.process_excel_file(
+                # Usar el procesador mejorado
+                processing_result = self.excel_processor.process_excel_file_enhanced(
                     file_path=self.selected_file,
                     sheet_name=sheet_to_use,
-                    column_mappings=self.column_mappings
+                    column_mappings=self.column_mappings,
+                    target_schema=self.selected_schema,
+                    target_table=self.selected_table,
+                    filter_duplicates=True
                 )
                 self.logger.info(
                     f"Resultado del procesamiento: {processing_result}")
@@ -1069,29 +1076,49 @@ class MainInterface:
                 self.cancel_button.config(state="disabled")
                 return
 
-            # Simular progreso para demostración (eliminar en producción)
-            # for i in range(101):
-            #     if self.progress_var:
-            #         self.progress_var.set(i)
-            #     if self.root:
-            #         self.root.update_idletasks()
-            #         self.root.after(10, lambda: None)  # Simular trabajo
-            #     # time.sleep(0.01) # Descomentar para ver la barra de progreso más lento
-
             # Restaurar estado de botones
             self.process_button.config(state="normal")
             self.cancel_button.config(state="disabled")
 
             if processing_result.success:
-                messagebox.showinfo(
-                    "Procesamiento Completado",
-                    f"El archivo ha sido procesado exitosamente.\n\n"
-                    f"Filas procesadas: {processing_result.processed_rows}\n"
-                    f"Filas omitidas: {processing_result.skipped_rows}\n"
-                    f"Tiempo: {processing_result.processing_time:.2f} segundos"
-                )
+                # Insertar los registros nuevos en la tabla destino
+                new_records_df = processing_result.data
+                if new_records_df is not None and not new_records_df.empty:
+                    columns = list(new_records_df.columns)
+                    placeholders = ','.join(['?' for _ in columns])
+                    insert_query = f"INSERT INTO [{self.selected_schema}].[{self.selected_table}] (" + ','.join(
+                        f'[{col}]' for col in columns) + f") VALUES ({placeholders})"
+                    rows_inserted = 0
+                    for row in new_records_df.itertuples(index=False, name=None):
+                        # Convertir todos los valores a tipos nativos de Python
+                        py_row = tuple(
+                            v.item() if hasattr(v, 'item') else (int(v) if isinstance(v, (np.integer,)) else (float(
+                                v) if isinstance(v, (np.floating,)) else str(v) if isinstance(v, (np.str_,)) else v))
+                            for v in row
+                        )
+                        try:
+                            self.db_connection.execute_non_query(
+                                insert_query, py_row)
+                            rows_inserted += 1
+                        except Exception as e:
+                            self.logger.error(
+                                f"Error insertando fila: {str(e)}")
+                    summary = self.excel_processor.get_processing_summary(
+                        processing_result)
+                    messagebox.showinfo(
+                        "Inserción Completada",
+                        f"Se insertaron {rows_inserted} registros nuevos en la tabla {self.selected_schema}.{self.selected_table}.\n\n{summary}"
+                    )
+                else:
+                    summary = self.excel_processor.get_processing_summary(
+                        processing_result)
+                    messagebox.showinfo(
+                        "Sin registros nuevos",
+                        f"No hay registros nuevos para insertar en la tabla destino.\n\n{summary}"
+                    )
                 if self.status_var:
-                    self.status_var.set("Procesamiento completado")
+                    self.status_var.set(
+                        "Procesamiento completado e inserción realizada")
             else:
                 error_msg = "\n".join(processing_result.errors)
                 messagebox.showerror(

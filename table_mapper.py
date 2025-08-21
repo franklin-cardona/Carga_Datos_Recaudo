@@ -78,8 +78,7 @@ class TableMapper:
             used_sql_columns = set()
 
             # Crear diccionario de estructura para acceso rápido
-            structure_dict = {col['COLUMN_NAME']
-                : col for col in table_structure}
+            structure_dict = {col['COLUMN_NAME']                              : col for col in table_structure}
 
             for excel_col in excel_columns:
                 best_mapping = self._find_best_column_match(
