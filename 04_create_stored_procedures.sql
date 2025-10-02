@@ -239,11 +239,11 @@ GO
 -- =============================================
 -- Procedimiento: Inserción Masiva Segura
 -- =============================================
-IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'Data.sp_BulkInsertData') AND type in (N'P', N'PC'))
-    DROP PROCEDURE Data.sp_BulkInsertData;
+IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'dbo.sp_BulkInsertData') AND type in (N'P', N'PC'))
+    DROP PROCEDURE dbo.sp_BulkInsertData;
 GO
 
-CREATE PROCEDURE Data.sp_BulkInsertData
+CREATE PROCEDURE dbo.sp_BulkInsertData
     @TableName NVARCHAR(128),
     @SchemaName NVARCHAR(128) = 'dbo',
     @DataXML XML,
@@ -259,11 +259,12 @@ BEGIN
     SET NOCOUNT ON;
     
     DECLARE @SQL NVARCHAR(MAX);
-    DECLARE @StartTime DATETIME2 = GETDATE();
+    DECLARE @StartTime DATETIME = GETDATE();
     DECLARE @Username NVARCHAR(50);
+	DECLARE @ExecutionTimeMs DATETIME;
     
     -- Obtener nombre de usuario
-    SELECT @Username = Username FROM Security.Users WHERE UserID = @UserID;
+    SELECT @Username = SUSER_NAME();
     
     BEGIN TRY
         BEGIN TRANSACTION;
@@ -274,6 +275,7 @@ BEGIN
         
         SET @RecordsInserted = 0; -- Placeholder
         SET @ErrorMessage = NULL;
+		set @ExecutionTimeMs = DATEDIFF(MILLISECOND, @StartTime, GETDATE());
         
         -- Registrar operación exitosa
         EXEC Audit.sp_LogOperation 
@@ -285,7 +287,8 @@ BEGIN
             @SchemaName = @SchemaName,
             @RecordCount = @RecordsInserted,
             @OperationStatus = 'SUCCESS',
-            @ExecutionTimeMs = DATEDIFF(MILLISECOND, @StartTime, GETDATE()),
+            --@ExecutionTimeMs = DATEDIFF(MILLISECOND, @StartTime, GETDATE()),
+			@ExecutionTimeMs = @ExecutionTimeMs,
             @SourceFile = @SourceFile,
             @WorksheetName = @WorksheetName,
             @LogID = @LogID OUTPUT;
@@ -298,7 +301,7 @@ BEGIN
         
         SET @ErrorMessage = ERROR_MESSAGE();
         SET @RecordsInserted = 0;
-        
+        set @ExecutionTimeMs = DATEDIFF(MILLISECOND, @StartTime, GETDATE());
         -- Registrar operación fallida
         EXEC Audit.sp_LogOperation 
             @SessionID = @SessionID,
@@ -310,7 +313,8 @@ BEGIN
             @RecordCount = 0,
             @OperationStatus = 'FAILED',
             @ErrorMessage = @ErrorMessage,
-            @ExecutionTimeMs = DATEDIFF(MILLISECOND, @StartTime, GETDATE()),
+            --@ExecutionTimeMs = DATEDIFF(MILLISECOND, @StartTime, GETDATE()) ,
+			@ExecutionTimeMs = @ExecutionTimeMs,
             @SourceFile = @SourceFile,
             @WorksheetName = @WorksheetName,
             @LogID = @LogID OUTPUT;

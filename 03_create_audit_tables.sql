@@ -28,8 +28,8 @@ BEGIN
         OperationTimestamp DATETIME2 NOT NULL DEFAULT GETDATE(),
         IPAddress NVARCHAR(45),
         ApplicationName NVARCHAR(100) DEFAULT 'Excel-SQL Integration',
-        AdditionalInfo NVARCHAR(MAX), -- JSON con información adicional
-        CONSTRAINT FK_OperationLog_Users FOREIGN KEY (UserID) REFERENCES Security.Users(UserID)
+        AdditionalInfo NVARCHAR(MAX)--, -- JSON con información adicional
+        --CONSTRAINT FK_OperationLog_Users FOREIGN KEY (UserID) REFERENCES Security.Users(UserID)
     );
     
     -- Índices para optimizar consultas de auditoría
