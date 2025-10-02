@@ -91,7 +91,7 @@ class ConnectionDialog:
         env_frame.grid(row=1, column=0, columnspan=2,
                        sticky=(tk.W, tk.E), pady=(0, 15))
 
-        ttk.Radiobutton(env_frame, text="Pruebas (P18PPAD20\\SQLEXPRESS)",
+        ttk.Radiobutton(env_frame, text="Pruebas (P18PPAD29\\SQLEXPRESS)",
                         variable=self.environment_var, value="test",
                         command=self._on_environment_change).pack(anchor=tk.W)
         ttk.Radiobutton(env_frame, text="Producción (BDPBIA01)",
@@ -215,14 +215,14 @@ class ConnectionDialog:
         env = self.environment_var.get()
 
         if env == "test":
-            self.server_var.set("P18PPAD20\\SQLEXPRESS")
+            self.server_var.set("P18PPAD29\\SQLEXPRESS")
             self.server_entry.config(state='disabled')
         elif env == "production":
             self.server_var.set("BDPBIA01")
             self.server_entry.config(state='disabled')
         else:  # custom
             self.server_entry.config(state='normal')
-            if self.server_var.get() in ["P18PPAD20\\SQLEXPRESS", "BDPBIA01"]:
+            if self.server_var.get() in ["P18PPAD29\\SQLEXPRESS", "BDPBIA01"]:
                 self.server_var.set("")
 
     def _on_auth_type_change(self):
@@ -247,7 +247,7 @@ class ConnectionDialog:
                     config = json.load(f)
 
                 self.server_var.set(config.get(
-                    'server', 'P18PPAD20\\SQLEXPRESS'))
+                    'server', 'P18PPAD29\\SQLEXPRESS'))
                 self.database_var.set(config.get('database', 'HISTORICO'))
                 self.auth_type_var.set(config.get('auth_type', 'windows'))
                 self.username_var.set(config.get('username', ''))
@@ -255,7 +255,7 @@ class ConnectionDialog:
 
                 # Determinar entorno basado en servidor
                 server = config.get('server', '')
-                if server == "P18PPAD20\\SQLEXPRESS":
+                if server == "P18PPAD29\\SQLEXPRESS":
                     self.environment_var.set("test")
                 elif server == "BDPBIA01":
                     self.environment_var.set("production")

@@ -47,8 +47,8 @@ class DuplicateFilter:
         self.logger = logging.getLogger(__name__)
         
         # Configuración
-        self.batch_size = 100  # Tamaño de lote para consultas de existencia
-        self.max_records_for_filtering = 10000  # Máximo de registros para filtrar
+        self.batch_size = 1000000  # Tamaño de lote para consultas de existencia
+        self.max_records_for_filtering = 1000000  # Máximo de registros para filtrar
     
     def filter_duplicates(self, schema_name: str, table_name: str, 
                          data: pd.DataFrame) -> DuplicateFilterResult:

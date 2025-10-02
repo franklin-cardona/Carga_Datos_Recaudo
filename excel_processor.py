@@ -95,9 +95,9 @@ class ExcelProcessor:
         self.db_connection = db_connection
         self.fuzzy_threshold = fuzzy_threshold
         self.logger = logging.getLogger(__name__)
-        self.max_file_size_mb = 1000
-        self.max_rows = 100000
-        self.chunk_size = 1000
+        self.max_file_size_mb = 1000000
+        self.max_rows = 1000000
+        self.chunk_size = 1000000
         self.supported_extensions = ['.xlsx', '.xls', '.xlsm']
         self.validation_patterns = {
             'email': re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'),
